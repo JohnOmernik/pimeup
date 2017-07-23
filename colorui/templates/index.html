@@ -1,0 +1,50 @@
+<html>
+<head>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="{{url_for('static', filename='css/slider.css')}}" rel="stylesheet" type="text/css">
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+
+
+</head>
+<body>
+
+
+
+<form  id="colorform" action="/" method="POST">
+<BR>
+<button type="submit" class="btn">Send Colors</button>
+<div id="container">
+<div id="sliders">
+    <table>
+        <tr>
+            <td>Red</td>
+            <td><input id="red" onchange="updateHidden();" type="range" min="0" max="255" value="{{redval}}"/> <span id="red-value" class="value"></span></td>
+        </tr>
+        <tr>
+            <td>Green</td>
+            <td><input id="green"  onchange="updateHidden();" type="range" min="0" max="255" value="{{greenval}}"/> <span id="green-value" class="value"></span></td>
+        </tr>
+        <tr>
+            <td>Blue</td>
+            <td><input id="blue"  onchange="updateHidden();" type="range" min="0" max="255" value="{{blueval}}"/> <span id="blue-value" class="value"></span></td>
+        </tr>
+        <tr>
+            <td>Brightness</td>
+            <td><input id="bright"  onchange="updateHidden();" type="range" min="0" max="255" value="{{brightval}}"/> <span id="bright-value" class="value"></span></td>
+        </tr>
+    </table>
+</div>
+</div>
+<input id="redval" type="hidden" name="redval" value="{{redval}}">
+<input id="blueval" type="hidden" name="blueval" value="{{blueval}}">
+<input id="greenval" type="hidden" name="greenval" value="{{greenval}}">
+<input id="brightval" type="hidden" name="brightval" value="{{brightval}}">
+</form>
+<script src="{{url_for('static', filename='js/slider.js')}}"></script>
+
+</body>
+</html>
+
