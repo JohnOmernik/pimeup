@@ -4,7 +4,6 @@ from Adafruit_PWM_Servo_Driver import PWM
 import time
 import random
 import sys
-import pygame
 import alsaaudio
 import wave
 import sys
