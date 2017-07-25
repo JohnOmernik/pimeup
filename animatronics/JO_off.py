@@ -1,13 +1,20 @@
 #!/usr/bin/python
-from Adafruit_PWM_Servo_Driver import PWM
 import time
 import sys
+
+
+# Import the PCA9685 module.
+import Adafruit_PCA9685
+
+# Initialise the PCA9685 using the default address (0x40).
+pwm = Adafruit_PCA9685.PCA9685(0x40)
+
+
+
 # ===========================================================================
 # Example Code
 # ===========================================================================
 
-# Initialise the PWM device using the default address
-pwm = PWM(0x40)
 # Note if you'd like more debug output you can instead run:
 #pwm = PWM(0x40, debug=True)
 
@@ -22,12 +29,11 @@ def setServoPulse(channel, pulse):
   print "%d us per bit" % pulseLength
   pulse *= 1000
   pulse /= pulseLength
-  pwm.setPWM(channel, 0, pulse)
+  pwm.set_pwm(channel, 0, pulse)
 
-pwm.setPWMFreq(60)                        # Set frequency to 60 Hz
+pwm.set_pwm_freq(60)
 
-
-pwm.setPWM(0, 4096, 0)
-pwm.setPWM(1, 4096, 0)
-pwm.setPWM(2, 4096, 0)
+pwm.set_pwm(0, 4096, 0)
+pwm.set_pwm(1, 4096, 0)
+pwm.set_pwm(2, 4096, 0)
 

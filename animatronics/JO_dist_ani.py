@@ -2,7 +2,14 @@
 
 #Libraries
 import RPi.GPIO as GPIO
-from Adafruit_PWM_Servo_Driver import PWM
+
+# Import the PCA9685 module.
+import Adafruit_PCA9685
+
+# Initialise the PCA9685 using the default address (0x40).
+pwm = Adafruit_PCA9685.PCA9685()
+
+
 import random
 import time
 import sys
@@ -10,12 +17,9 @@ import alsaaudio
 import wave
 import struct
 import math
-# Initialise the PWM device using the default address
-pwm = PWM(0x40)
 # Note if you'd like more debug output you can instead run:
-#pwm = PWM(0x40, debug=True)
-pwm.setPWMFreq(60)                        # Set frequency to 60 Hz
-
+# Set frequency to 60hz, good for servos.
+pwm.set_pwm_freq(60)
 #GPIO Mode (BOARD / BCM)
 GPIO.setmode(GPIO.BCM)
 
@@ -53,9 +57,9 @@ def main ():
                 time.sleep(0.5)
     except KeyboardInterrupt:
         print("Mr. Bigglesworth is watching")
-        pwm.setPWM(0, 4096, 0)
-        pwm.setPWM(1, 4096, 0)
-        pwm.setPWM(2, 4096, 0)
+        pwm.set_pwm(0, 4096, 0)
+        pwm.set_pwm(1, 4096, 0)
+        pwm.set_pwm(2, 4096, 0)
         GPIO.cleanup()
 
 
@@ -208,7 +212,7 @@ def setServoPulse(channel, pulse):
   print "%d us per bit" % pulseLength
   pulse *= 1000
   pulse /= pulseLength
-  pwm.setPWM(channel, 0, pulse)
+  pwm.set_pwm(channel, 0, pulse)
 
 def moveMouth(sig):
     global mouthpos
@@ -249,30 +253,30 @@ def rms(frame, CHUNK):
 # Channel 2 300-500
 
 def eyesClosed():
-    pwm.setPWM(2, 0, 300)
+    pwm.set_pwm(2, 0, 300)
 def eyesOpen():
-    pwm.setPWM(2, 0, 400)
+    pwm.set_pwm(2, 0, 400)
 
 def mouthOpen():
-    pwm.setPWM(0, 0, 500)
+    pwm.set_pwm(0, 0, 500)
 
 def mouthClosed():
-    pwm.setPWM(0, 0, 350)
+    pwm.set_pwm(0, 0, 350)
 
 def mouthMiddle():
-    pwm.setPWM(0, 0, 425)
+    pwm.set_pwm(0, 0, 425)
 
 def eyesRand():
     c = [375, 525]
-    pwm.setPWM(1, 0, random.choice(c))
+    pwm.set_pwm(1, 0, random.choice(c))
 
 
 def eyesLeft():
-    pwm.setPWM(1, 0, 375)
+    pwm.set_pwm(1, 0, 375)
 def eyesRight():
-    pwm.setPWM(1, 0, 525)
+    pwm.set_pwm(1, 0, 525)
 def eyesCenter():
-    pwm.setPWM(1, 0, 450)
+    pwm.set_pwm(1, 0, 450)
 
 def distance():
     # set Trigger to HIGH
