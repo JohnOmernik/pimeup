@@ -4,7 +4,7 @@ sudo apt-get update && sudo apt-get upgrade -y
 
 sudo apt-get install -y python-dev build-essential python3 python3-pip python3-dev python-smbus python-alsaaudio 
 
-sudo pip3 install rpi.gpio && pip install rpi.gpio
+sudo pip3 install wtforms gevent rpi.gpio && pip install rpi.gpio gevent wtforms
 
 
 # Dotstar LEDs
