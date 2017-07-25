@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-#from Adafruit_PWM_Servo_Driver import PWM
 import time
 import random
 import sys
@@ -21,14 +20,6 @@ GPIO.setup(SPIMOSI, GPIO.OUT)
 GPIO.setup(SPIMISO, GPIO.IN)
 GPIO.setup(SPICLK, GPIO.OUT)
 GPIO.setup(SPICS, GPIO.OUT)
-
-
-
-# Initialise the PWM device using the default address
-#pwm = PWM(0x40)
-# Note if you'd like more debug output you can instead run:
-#pwm = PWM(0x40, debug=True)
-#pwm.setPWMFreq(60)                        # Set frequency to 60 Hz
 
 DEBUG = 1
 
