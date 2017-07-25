@@ -2,9 +2,9 @@
 
 sudo apt-get update && sudo apt-get upgrade -y
 
-sudo apt-get install -y python-dev build-essential python3 python3-pip python3-dev python-smbus python-alsaaudio 
+sudo apt-get install -y python-dev build-essential python3 python3-pip libcwiid1 python3-dev python-smbus python-alsaaudio 
 
-sudo pip3 install wtforms gevent rpi.gpio && pip install rpi.gpio gevent wtforms
+sudo pip3 install wtforms gevent rpi.gpio && pip install rpi.gpio cwiid gevent wtforms
 
 
 # Dotstar LEDs
@@ -16,6 +16,9 @@ git clone https://github.com/adafruit/Adafruit_Python_GPIO.git && cd Adafruit_Py
 # Adafruit PWM Servo Library
 git clone https://github.com/adafruit/Adafruit_Python_PCA9685.git && cd Adafruit_Python_PCA9685 && sudo python setup.py install && cd ..
 
+
+# Adafruit Motor Hat
+git clone https://github.com/adafruit/Adafruit-Motor-HAT-Python-Library && cd Adafruit-Motor-HAT-Python-Library && sudo python setup.py install && cd ..
 
 
 echo "Updating sound driver to prefer USB audio"
