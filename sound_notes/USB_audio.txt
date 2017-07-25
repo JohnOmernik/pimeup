@@ -1,0 +1,12 @@
+- For Raspi using hte Adafruit 7.1 channel sound adapter, basically 
+
+cat > /etc/asound.conf << EOF
+pcm.!default  {
+ type hw card 1
+}
+ctl.!default {
+ type hw card 1
+}
+EOF
+
+
