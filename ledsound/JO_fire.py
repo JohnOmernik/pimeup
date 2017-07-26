@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 import time
+import gevent
 import random
 from dotstar import Adafruit_DotStar
 import sys
@@ -24,12 +25,10 @@ strip.begin()           # Initialize pins for output
 strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
 
 
+hi_thres = 50
 
-hi_thres = 150
-
-
-mydelay = 0.02
-
+mydelay = 0.04
+mydelays = [0.01, 0.02, 0.03, 0.1]
 heat = []
 for x in range(numpixels):
     heat.append(random.randint(0, 5))
@@ -64,6 +63,16 @@ def main():
         for y in colors_dict[x]:
             allcolors.append(y)
 
+
+    gevent.joinall([
+        gevent.spawn(PlayFire),
+        gevent.spawn(FirePlace),
+    ])
+
+
+
+def PlayFire():
+    global heat
     channels = 2
     rate = 44100
     size = 1024
@@ -73,31 +82,30 @@ def main():
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
 
-    
     try:
         while True:
-            sndstrem = open("crackfire.wave", "rb")
+            sndstream = open("crackfire.wav", "rb")
             data = sndstream.read(size)
             while data:
                 out_stream.write(data)
+                gevent.sleep(0.001)
                 data = sndstream.read(size)
                 rmsval = rms(data)
-                if rmsval > hithres:
-                    FirePlace(True)
-                else:
-                    FirePlace(False)
+                if rmsval > hi_thres:
+                    rval = random.randint(0, numpixels - 1)
+                    sparkval = random.randint(160, 255)
+                    print("Sparking LED %s to %s" % (rval, sparkval))
+                    heat[rval] = heat[rval] + random.randint(160,255)
+                gevent.sleep(0.001)
             sndstream.close()
-
-
-
-
+            gevent.sleep(0.001)
     except KeyboardInterrupt:
         print("")
         print("exiting and shutting down strip")
         setAllLEDS(strip, [0x000000])
+        sys.exit(0)
 
-
-def FirePlace(sparkitup):
+def FirePlace():
     global numpixels	
     global SPARKING
     global COOLING
@@ -110,40 +118,40 @@ def FirePlace(sparkitup):
 
     # Every cycle there will be some random cololing
     # Consider adding a degree of random whether a pixel cools
-    for i in range(numpixels):
-        if random.randint(0, 255) < COOLING:
-            tval = heat[i] - random.randint(0, ((COOLING * 10) / numpixels) + 2)
-            heat[i] = tval    
+    try:
+        while True:
+            for i in range(numpixels):
+                if random.randint(0, 255) < COOLING:
+                    tval = heat[i] - random.randint(0, ((COOLING * 10) / numpixels) + 2)
+                    heat[i] = tval
+            gevent.sleep(random.choice(mydelays))    
 
     # This is supposed to be a diffusing effect I think
-    k = numpixels -3
-    while k > 2:
-        if random.randint(0, 255) < COOLING:
-            tval = (heat[k-1] + heat[ k- 2 ] + heat[ k- 2] ) / 3
-            heat[k] = tval
-            k = k - 1
-
-    if sparkitup == True:
-        numsparks = random.randint(0,10):
-        for x in range(numsparks):
-            rval = random.randint(0, numpixels - 1)
-            sparkval = random.randint(160, 255)
-            print("Sparking LED %s to %s" % (rval, sparkval))
-            heat[rval] = heat[rval] + random.randint(160,255)
-
-
+            k = numpixels -3
+            while k > 2:
+                if random.randint(0, 255) * 2 < COOLING:
+                    tval = (heat[k-1] + heat[ k- 2 ] + heat[ k- 2] ) / 3
+                    heat[k] = tval
+                    k = k - 1
+            gevent.sleep(random.choice(mydelays))
     # Now, actually set the pixels based on a scaled representation of all pixels
-    for j in range(numpixels):
+            for j in range(numpixels):
 
-        if heat[j] > 255:
-            heat[j] = 255
-        if heat[j] < 0:
-            heat[j] = 0
-        newcolor = int((heat[j] * len(allcolors)) / 256)
+                if heat[j] > 255:
+                    heat[j] = 255
+                if heat[j] < 0:
+                    heat[j] = 0
+                newcolor = int((heat[j] * len(allcolors)) / 256)
 #        print("Pixel: %s has a heat value of %s and a newcolor idx of %s" % (j, heat[j], newcolor))
-        strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
-    strip.show()                               
-
+                strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
+            gevent.sleep(random.choice(mydelays))
+            strip.show()                               
+            gevent.sleep(random.choice(mydelays))
+    except KeyboardInterrupt:
+        print("")
+        print("exiting and shutting down strip")
+        setAllLEDS(strip, [0x000000])
+        sys.exit(0)
 
 def color_dict(gradient):
   ''' Takes in a list of RGB sub-lists and returns dictionary of
@@ -153,6 +161,25 @@ def color_dict(gradient):
       "r":[RGB[0] for RGB in gradient],
       "g":[RGB[1] for RGB in gradient],
       "b":[RGB[2] for RGB in gradient]}
+
+
+def rms(frame):
+    SHORT_NORMALIZE = (1.0/32768.0)
+    CHUNK = 1024
+    swidth = 2
+
+    count = len(frame)/swidth
+    format = "%dh"%(count)
+    shorts = struct.unpack( format, frame )
+
+    sum_squares = 0.0
+    for sample in shorts:
+        n = sample * SHORT_NORMALIZE
+        sum_squares += n*n
+        rms = math.pow(sum_squares/count,0.5);
+        return rms * 10000
+
+
 
 
 def linear_gradient(start_hex, finish_hex="#FFFFFF", n=10):
