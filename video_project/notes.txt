@@ -19,3 +19,33 @@ Play USB Cam viassh
 sudo mplayer tv:///dev/video0 
 
 
+
+# Clear the tty 
+sudo su
+clear > /dev/tty1 
+
+
+
+setterm -cursor off > /dev/tty1
+
+
+While mplayer is doing it's thing, hitting "6" or 7 seems to make it black or white... 
+
+
+udevadm trigger seems to rescan bus
+
+
+         backlight_compensation (int)    : min=0 max=1 step=1 default=57343 value=0
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=saturation=0
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=brightness=200
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=brightness=255
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=brightness=240
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=contrast=255
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=contrast=24
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=contrast=100
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=saturation=10
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=saturation=200
+root@PI3:/home/pi/pimeup/video_project# v4l2-ctl --set-ctrl=saturation=20
+
+
+Saturation seems to be the key for video
