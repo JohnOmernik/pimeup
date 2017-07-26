@@ -31,16 +31,16 @@ mydelay = 0.04
 mydelays = [0.01, 0.02, 0.03, 0.1]
 heat = []
 for x in range(numpixels):
-    heat.append(random.randint(0, 5))
+    heat.append(random.randint(0, 50))
 
 #fire_colors = [ 0x000000, 0xFF0000, 0xFFFF00, 0xFFFFFF ]
-fire_colors = [ "#000500", "#00FF00", "#48FF00", "#48FF48" ]
+fire_colors = [ "#000500", "#00FF00", "#48FF00" ]
 
 num_colors = 100
 my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
-
+gsparkitup = True
 
 
 
@@ -61,12 +61,13 @@ def main():
             colors_dict[fire_colors[x] + "_2_" + fire_colors[x+1]] = gtmp['hex']
     for x in colors_dict:
         for y in colors_dict[x]:
+          #  print("Color: %s" % hex_to_RGB(y))
             allcolors.append(y)
 
+#        gevent.spawn(PlayFire),
 
     gevent.joinall([
-        gevent.spawn(PlayFire),
-        gevent.spawn(FirePlace),
+        gevent.spawn(FirePlace)
     ])
 
 
@@ -106,6 +107,7 @@ def PlayFire():
         sys.exit(0)
 
 def FirePlace():
+    global gsparkitup
     global numpixels	
     global SPARKING
     global COOLING
@@ -134,6 +136,16 @@ def FirePlace():
                     heat[k] = tval
                     k = k - 1
             gevent.sleep(random.choice(mydelays))
+
+    # Now let's see if we set any sparks!
+    
+        if gsparkitup == True:
+            if random.randint(0, 255) < SPARKING:
+                rval = random.randint(0, numpixels - 1)
+                sparkval = random.randint(160, 255)
+                print("Sparking LED %s to %s" % (rval, sparkval))
+                heat[rval] = heat[rval] + random.randint(160,255)
+
     # Now, actually set the pixels based on a scaled representation of all pixels
             for j in range(numpixels):
 
@@ -143,6 +155,9 @@ def FirePlace():
                     heat[j] = 0
                 newcolor = int((heat[j] * len(allcolors)) / 256)
 #        print("Pixel: %s has a heat value of %s and a newcolor idx of %s" % (j, heat[j], newcolor))
+#                print("Setting Color: %s" % hex_to_RGB(allcolors[newcolor]))
+#   
+#                 print("Setting color to: 0x%0.2X" % int(allcolors[newcolor].replace("#", ''), 16))
                 strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
             gevent.sleep(random.choice(mydelays))
             strip.show()                               

@@ -15,8 +15,7 @@ strip     = Adafruit_DotStar(numpixels, datapin, clockpin)
 
 strip.begin()           # Initialize pins for output
 strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
-
-mydelay = 0.02
+mydelay = [0.01, 0.02, 0.03, 0.1]
 #Setting color to: 0xFF0000    # Green
 #Setting color to: 0xCC00CC    # Bright Teal
 #Setting color to: 0x66CC00    # Orange
@@ -34,8 +33,8 @@ for x in range(numpixels):
     heat.append(random.randint(0, 5))
 
 #fire_colors = [ 0x000000, 0xFF0000, 0xFFFF00, 0xFFFFFF ]
-fire_colors = [ "#000500", "#00FF00", "#48FF00", "#48FF48" ]
-
+fire_colors = [ "#000500", "#00FF00", "#48FF00", "#48FF32" ]
+gsparkitup = True
 num_colors = 100
 my_colors = []
 colors_dict = OrderedDict()
@@ -69,7 +68,7 @@ def main():
 
     try: 
         while True:                              # Loop forever
-            time.sleep(mydelay)             # Pause 20 milliseconds (~50 fps)
+            time.sleep(random.choice(mydelay))             # Pause 20 milliseconds (~50 fps)
             FirePlace()
 #            for x in range(len(fire_colors)):
 #                if x == len(fire_colors) - 1:
@@ -94,6 +93,7 @@ def main():
 
 
 def FirePlace():
+    global gsparkitup
     global numpixels	
     global SPARKING
     global COOLING
@@ -119,11 +119,12 @@ def FirePlace():
             heat[k] = tval
             k = k - 1
     # Now let's see if we set any sparks!
-    if random.randint(0, 255) < SPARKING:
-        rval = random.randint(0, numpixels - 1)
-        sparkval = random.randint(160, 255)
-        print("Sparking LED %s to %s" % (rval, sparkval))
-        heat[rval] = heat[rval] + random.randint(160,255)
+    if gsparkitup == True:
+        if random.randint(0, 255) < SPARKING:
+            rval = random.randint(0, numpixels - 1)
+            sparkval = random.randint(160, 255)
+            print("Sparking LED %s to %s" % (rval, sparkval))
+            heat[rval] = heat[rval] + random.randint(160,255)
 
 
     # Now, actually set the pixels based on a scaled representation of all pixels
