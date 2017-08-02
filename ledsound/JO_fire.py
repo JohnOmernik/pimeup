@@ -11,11 +11,9 @@ import wave
 import struct
 import math
 
-
-
 COOLING = 60
 SPARKING = 60
-numpixels = 60 # Number of LEDs in strip
+numpixels = 120 # Number of LEDs in strip
 # Here's how to control the strip from any two GPIO pins:
 datapin   = 23
 clockpin  = 24
@@ -23,7 +21,6 @@ strip     = Adafruit_DotStar(numpixels, datapin, clockpin)
 
 strip.begin()           # Initialize pins for output
 strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
-
 
 hi_thres = 50
 
@@ -33,16 +30,28 @@ heat = []
 for x in range(numpixels):
     heat.append(random.randint(0, 50))
 
+#Setting color to: 0xFF0000    # Green
+#Setting color to: 0xCC00CC    # Bright Teal
+#Setting color to: 0x66CC00    # Orange
+#Setting color to: 0x33FFFF    # Magenta 
+#Setting color to: 0xFF00      # Red
+#Setting color to: 0x330099    # Lightish Blue
+#Setting color to: 0xFFFF00    # YEllow 
+#Setting color to: 0xFF        # Bright Blue
+#Setting color to: 0xFF9900    # YEllower Gren
+#Setting color to: 0x33        # Dark BLue
+
+
 #fire_colors = [ 0x000000, 0xFF0000, 0xFFFF00, 0xFFFFFF ]
-fire_colors = [ "#000500", "#00FF00", "#48FF00" ]
+#fire_colors = [ "#000500", "#00FF00", "#48FF00" ]   # Red Yellow White Fire
+fire_colors = [ "#000000", "#FF0000", "#CC00CC", "#66CC00", "#33FFFF", "#00FF00", "#330099", "#FFFF00",  "#0000FF", "#FF0000" ]   # Chromomancer!
+
 
 num_colors = 100
 my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
-gsparkitup = True
-
-
+gsparkitup = False
 
 def main():
     global strip
@@ -64,16 +73,17 @@ def main():
           #  print("Color: %s" % hex_to_RGB(y))
             allcolors.append(y)
 
-#        gevent.spawn(PlayFire),
 
     gevent.joinall([
-        gevent.spawn(FirePlace)
-    ])
+        gevent.spawn(FirePlace),
+        gevent.spawn(PlayFire),
+   ])
 
 
 
 def PlayFire():
     global heat
+    global numpixels
     channels = 2
     rate = 44100
     size = 1024
@@ -94,8 +104,8 @@ def PlayFire():
                 rmsval = rms(data)
                 if rmsval > hi_thres:
                     rval = random.randint(0, numpixels - 1)
-                    sparkval = random.randint(160, 255)
-                    print("Sparking LED %s to %s" % (rval, sparkval))
+                    sparkval = random.randint(200, 255)
+#                    print("Sparking LED %s to %s" % (rval, sparkval))
                     heat[rval] = heat[rval] + random.randint(160,255)
                 gevent.sleep(0.001)
             sndstream.close()
@@ -138,13 +148,12 @@ def FirePlace():
             gevent.sleep(random.choice(mydelays))
 
     # Now let's see if we set any sparks!
-    
-        if gsparkitup == True:
-            if random.randint(0, 255) < SPARKING:
-                rval = random.randint(0, numpixels - 1)
-                sparkval = random.randint(160, 255)
-                print("Sparking LED %s to %s" % (rval, sparkval))
-                heat[rval] = heat[rval] + random.randint(160,255)
+            if gsparkitup == True:
+                if random.randint(0, 255) < SPARKING:
+                    rval = random.randint(0, numpixels - 1)
+                    sparkval = random.randint(160, 255)
+                    print("Sparking LED %s to %s" % (rval, sparkval))
+                    heat[rval] = heat[rval] + random.randint(160,255)
 
     # Now, actually set the pixels based on a scaled representation of all pixels
             for j in range(numpixels):
