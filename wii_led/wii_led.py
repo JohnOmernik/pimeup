@@ -8,6 +8,17 @@ from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
 
+import RPi.GPIO as GPIO
+#GPIO Mode (BOARD / BCM)
+GPIO.setmode(GPIO.BCM)
+ #set GPIO Pins
+GPIO_RELAY = 16
+#set GPIO direction (IN / OUT)
+GPIO.setup(GPIO_RELAY, GPIO.OUT)
+
+
+
+
 mesg = False
 rpt_mode = 0
 wiimote = None
@@ -284,6 +295,13 @@ def handle_buttons(buttons):
         if turbo == True:
             print("Setting turbo False")
             turbo = False
+    
+    if (buttons & cwiid.BTN_PLUS):
+        print("Squirting")
+        GPIO.output(GPIO_RELAY, True)
+    else:        
+        GPIO.output(GPIO_RELAY, False)
+
     if (buttons  & cwiid.BTN_UP):
         if turbo == True:
             newBright = curBright + 50
@@ -330,8 +348,6 @@ def handle_buttons(buttons):
     elif (buttons & cwiid.BTN_2):
         clearall()
         brokenlight = True
-    elif (buttons & cwiid.BTN_PLUS):
-        print("Plus")
     elif (buttons & cwiid.BTN_MINUS):
         danceparty = True
     elif (buttons & cwiid.BTN_A):
