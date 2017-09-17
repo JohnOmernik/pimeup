@@ -7,6 +7,10 @@ sudo apt-get install -y python-dev build-essential python3 python3-pip libcwiid1
 sudo pip3 install wtforms gevent rpi.gpio && pip install rpi.gpio gevent wtforms
 
 
+
+echo "Undisabling Bluetooth"
+sudo rfkill unblock bluetooth
+
 # Dotstar LEDs
 git clone https://github.com/adafruit/Adafruit_DotStar_Pi && cd Adafruit_DotStar_Pi && sudo python setup.py install && cd ..
 
