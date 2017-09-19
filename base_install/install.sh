@@ -4,7 +4,7 @@ sudo apt-get update && sudo apt-get upgrade -y
 
 sudo apt-get install -y python-dev rfkill build-essential python3 python3-pip libcwiid1 python3-dev python-smbus python-alsaaudio python-cwiid python-gevent
 
-sudo pip3 install wtforms gevent rpi.gpio && pip install rpi.gpio wtforms
+sudo pip3 install wtforms rpi.gpio && pip install rpi.gpio wtforms
 
 
 
