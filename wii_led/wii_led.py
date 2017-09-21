@@ -3,10 +3,22 @@ import cwiid
 import sys
 import gevent
 import time
+import json
+import datetime
 import atexit
 from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
+import socket
+
+
+WHOAMI = socket.gethostname()
+
+
+
+
+
+
 
 import RPi.GPIO as GPIO
 #GPIO Mode (BOARD / BCM)
@@ -24,8 +36,11 @@ rpt_mode = 0
 wiimote = None
 connected = False
 turbo = False
-
+rumble = 0
 numpixels = 60 # Number of LEDs in strip
+lasthb = 0
+hbinterval = 30
+
 # Here's how to control the strip from any two GPIO pins:
 datapin   = 23
 clockpin  = 24
@@ -105,9 +120,10 @@ def main():
     global rpt_mode
     global connected
     global strip
+    global rumble
     # Set the first pixel to red to show not connected
-    strip.setPixelColor(0, 0x00FF00)    
-    strip.show()
+#    strip.setPixelColor(0, 0x00FF00)    
+#    strip.show()
 
 
     print("Trying Connection")
@@ -117,17 +133,23 @@ def main():
             wiimote = cwiid.Wiimote()
             print("Connected!")
             connected = True
-            strip.setPixelColor(0, 0x0000FF) # Set to green to show connection
-            strip.show()
+            rumble ^= 1
+            wiimote.rumble = rumble
+            time.sleep(2)
+            rumble ^= 1
+            wiimote.rumble = rumble
+
+ #           strip.setPixelColor(0, 0x0000FF) # Set to green to show connection
+ #           strip.show()
         except:
-            strip.setPixelColor(0, 0xFFFF00) # Set to yellow to show failed connections
-            strip.show()
+ #           strip.setPixelColor(0, 0xFFFF00) # Set to yellow to show failed connections
+ #           strip.show()
             print("Trying Again, please press 1+2")
             time.sleep(2)
-            strip.setPixelColor(0, 0x00FF00) # Set back to red to show not connected
-            strip.show()
+  #          strip.setPixelColor(0, 0x00FF00) # Set back to red to show not connected
+  #          strip.show()
 
-            
+
     wiimote.mesg_callback = callback
 
     print("For LED we enable Button")
@@ -136,6 +158,9 @@ def main():
     # Enable the messages in callback
     wiimote.enable(cwiid.FLAG_MESG_IFC);
     wiimote.rpt_mode = rpt_mode
+
+#    print(wiimote.state)
+
 
     gevent.joinall([
         gevent.spawn(normal),
@@ -148,11 +173,23 @@ def main():
 def normal():
     global strip
     global wiimote
+    global lasthb
+    global hbinterval
     try:
         while True:
-            pass
             gevent.sleep(0.01)
             time.sleep(0.001)
+            curtime = int(time.time())
+            if curtime - lasthb > hbinterval:
+                curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+                outrec = OrderedDict()
+                outrec['ts'] = curts
+                outrec['battery'] = wiimote.state['battery']
+                outrec['host'] = WHOAMI
+                print(json.dumps(outrec))
+                outrec = None
+                lasthb = curtime
+
     except KeyboardInterrupt:
         print("Exiting")
         setAllLEDS(strip, [0x000000])
@@ -434,7 +471,8 @@ def RGB_to_hex(RGB):
 
 
 def callback(mesg_list, time):
-    
+
+
     for mesg in mesg_list:
         if mesg[0] == cwiid.MESG_BTN:
             handle_buttons(mesg[1])
