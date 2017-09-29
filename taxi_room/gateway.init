@@ -1,0 +1,49 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          gateway
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: GW Heartbeat
+### END INIT INFO
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+APP_NAME="gateway"
+DAEMON="/home/pi/pimeup/${APP_NAME}/${APP_NAME}.sh"
+PIDFILE=/var/run/${APP_NAME}.pid
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+     log_daemon_msg "Starting $APP_NAME"
+     start_daemon -p $PIDFILE $DAEMON
+     log_end_msg $?
+   ;;
+  stop)
+     log_daemon_msg "Stopping $APP_NAME"
+     killproc -p $PIDFILE $DAEMON
+     PID=`ps x |grep feed | head -1 | awk '{print $1}'`
+     echo "Killing $PID"
+     kill -9 $PID
+     log_end_msg $?
+   ;;
+  force-reload|restart)
+     $0 stop
+     $0 start
+   ;;
+  status)
+     status_of_proc -p $PIDFILE $DAEMON atd && exit 0 || exit $?
+   ;;
+ *)
+   echo "Usage: /etc/init.d/${APP_NAME} {start|stop|restart|force-reload|status}"
+   exit 1
+  ;;
+esac
+
+exit 0
+
+
+
