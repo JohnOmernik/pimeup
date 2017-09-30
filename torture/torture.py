@@ -10,15 +10,18 @@ from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
 import socket
+import alsaaudio
 
 
 WHOAMI = socket.gethostname()
+m = alsaaudio.Mixer('PCM')
+current_volume = m.getvolume() # Get the current Volume#
+print("Cur Vol: %s " % current_volume)
+m.setvolume(100) # Set the volume to 70%.
+current_volume = m.getvolume() # Get the current Volume
+print("New Cur Vol: %s " % current_volume)
 
-
-
-
-
-
+WHOAMI = socket.gethostname()
 
 import RPi.GPIO as GPIO
 #GPIO Mode (BOARD / BCM)
@@ -28,20 +31,13 @@ GPIO_RELAY = 16
 #set GPIO direction (IN / OUT)
 GPIO.setup(GPIO_RELAY, GPIO.OUT)
 
-
-
-
 mesg = False
 rpt_mode = 0
 wiimote = None
 connected = False
 turbo = False
 rumble = 0
-<<<<<<< HEAD
-numpixels = 144 # Number of LEDs in strip
-=======
-numpixels = 120 # Number of LEDs in strip
->>>>>>> 863d3504e746dc74f4376c64610d475de2647b5d
+numpixels = 60 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
@@ -53,7 +49,7 @@ strip     = Adafruit_DotStar(numpixels, datapin, clockpin)
 strip.begin()           # Initialize pins for output
 strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
 
-mydelays = [0.01, 0.02, 0.03, 0.1, 0.15]
+mydelays = [0.01]
 heat = []
 for x in range(numpixels):
     heat.append(random.randint(0, 50))
@@ -69,14 +65,13 @@ LIGHTOFF = 15
 COOLING = 60
 SPARKING = 60
 gsparkitup = True
-fire_colors = [ "#000500", "#00FF00", "#48FF00", "#48FF32" ]
+fire_colors = [ "#000033", "#0033FF", "#0099FF", "#00FFFF"]
 num_colors = 100
 my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
 
-fireplace = False
-danceparty = False
+fireplace = True
 
 #Setting color to: 0xFF0000    # Green
 #Setting color to: 0xCC00CC    # Bright Teal
@@ -88,16 +83,6 @@ danceparty = False
 #Setting color to: 0xFF        # Bright Blue
 #Setting color to: 0xFF9900    # YEllower Gren
 #Setting color to: 0x33        # Dark BLue
-
-
-
-
-colors = [0xFF0000, 0xCC00CC, 0x66CC00, 0x33FFFF, 0xFF00, 0x330099, 0xFFFF00, 0xFF, 0xFF9900, 0x33, 0xFFFFFF]
-color_idx = 0
-
-
-
-
 
 
 def main():
@@ -116,8 +101,6 @@ def main():
       #  print("Color: %s" % hex_to_RGB(y))
             allcolors.append(y)
 
-
-
     #Connect to address given on command-line, if present
     print 'Put Wiimote in discoverable mode now (press 1+2)...'
     global wiimote
@@ -125,9 +108,6 @@ def main():
     global connected
     global strip
     global rumble
-    # Set the first pixel to red to show not connected
-#    strip.setPixelColor(0, 0x00FF00)    
-#    strip.show()
 
 
     print("Trying Connection")
@@ -142,16 +122,9 @@ def main():
             time.sleep(2)
             rumble ^= 1
             wiimote.rumble = rumble
-
- #           strip.setPixelColor(0, 0x0000FF) # Set to green to show connection
- #           strip.show()
         except:
- #           strip.setPixelColor(0, 0xFFFF00) # Set to yellow to show failed connections
- #           strip.show()
             print("Trying Again, please press 1+2")
             time.sleep(2)
-  #          strip.setPixelColor(0, 0x00FF00) # Set back to red to show not connected
-  #          strip.show()
 
 
     wiimote.mesg_callback = callback
@@ -165,12 +138,10 @@ def main():
 
 #    print(wiimote.state)
 
-
     gevent.joinall([
         gevent.spawn(normal),
         gevent.spawn(FirePlace),
-        gevent.spawn(BrokenLight),
-        gevent.spawn(DanceParty),
+        gevent.spawn(PlaySound),
     ])
 
 
@@ -203,50 +174,36 @@ def normal():
     sys.exit()
 
 
-def BrokenLight():
-    global strip
-    global brokenlight
-    global LIGHTOFF
-    global LIGHTON
-    global light
-    try:
-        while True:
-            if brokenlight == True:
-                c = random.randint(0, 100)
-                if light == True and c < LIGHTOFF:
-                    light = False
-                    setAllLEDS(strip, [0x000000])
-                elif light == False and c < LIGHTON:
-                    light = True
-                    setAllLEDS(strip, [0xF0F0FF])
-                gevent.sleep(random.choice(mydelays))
-            else:
-                gevent.sleep(0.1)
-    except KeyboardInterrupt:
-        print("")
-        print("exiting and shutting down strip")
-        setAllLEDS(strip, [0x000000])
-        sys.exit(0)                     
-                
-def DanceParty():
-    global strip
-    global danceparty
-    global numpixels
-    try:
-        while True:
-            if danceparty == True:
-                for x in range(numpixels):
-                    strip.setPixelColor(x, random.choice(colors))
-                strip.show()
-                gevent.sleep(0.3)
-            else:
-                gevent.sleep(0.1)
-    except KeyboardInterrupt:
-        print("")
-        print("exiting and shutting down strip")
-        setAllLEDS(strip, [0x000000])
-        sys.exit(0)
-    
+
+def PlaySound():
+    sounds = [0, 0, 0]
+    channels = 2
+    rate = 44100
+    size = 1024
+    out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
+    out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+    out_stream.setchannels(channels)
+    out_stream.setrate(rate)
+    out_stream.setperiodsize(size)
+
+    soundfiles = ['/home/pi/torture_audio.wav']
+    curstream = None
+    while True:
+        curfile = random.choice(soundfiles)
+        curstream = open(curfile, "rb")
+        gevent.sleep(0.001)
+        if curstream is not None:
+            data = curstream.read(size)
+            while data:
+                out_stream.write(data)
+                data = curstream.read(size)
+                gevent.sleep(0.001)
+            curstream.close()
+            print("Looping Sound")
+
+
+
+
 
 def FirePlace():
     global gsparkitup
@@ -312,105 +269,18 @@ def FirePlace():
 
 
 
-
-
-
 def handle_buttons(buttons):
-    global turbo
     global heat
     global strip
-    global colors
-    global color_idx
     global fireplace
-    global brokenlight    
-    global danceparty
-    numcolors = len(colors)
 
-    curBright = strip.getBrightness()
 
-    if (buttons & cwiid.BTN_B):
-        if turbo == False:
-            print("Setting turbo True")
-            turbo = True
-    else:
-        if turbo == True:
-            print("Setting turbo False")
-            turbo = False
-    
-    if (buttons & cwiid.BTN_PLUS):
+    if (buttons & cwiid.BTN_A):
         print("Squirting")
         GPIO.output(GPIO_RELAY, True)
-    else:        
+    else:
         GPIO.output(GPIO_RELAY, False)
 
-    if (buttons  & cwiid.BTN_UP):
-        if turbo == True:
-            newBright = curBright + 50
-        else:
-            newBright = curBright + 5
-        if newBright > 255:
-            newBright = 255
-            strip.setBrightness(0)
-            strip.show()
-            time.sleep(0.5)
-        strip.setBrightness(newBright)
-        strip.show()
-    elif (buttons & cwiid.BTN_DOWN):
-        if turbo == True:
-            newBright = curBright - 50
-        else:
-            newBright = curBright - 5
-        if newBright < 0:
-            newBright = 0
-            strip.setBrightness(255)
-            strip.show()
-            time.sleep(0.5)
-        strip.setBrightness(newBright)
-        strip.show()
-    elif (buttons & cwiid.BTN_LEFT):
-        if color_idx == 0:
-            color_idx = numcolors - 1
-        else:
-            color_idx = color_idx - 1
-        brokenlight = False
-        fireplace = False
-        setAllLEDS(strip, [colors[color_idx]])
-    elif (buttons & cwiid.BTN_RIGHT):
-        if color_idx == numcolors - 1: 
-            color_idx = 0
-        else:
-            color_idx = color_idx + 1
-        fireplace = False
-        brokenlight = False
-        setAllLEDS(strip, [colors[color_idx]])
-    elif (buttons & cwiid.BTN_1):
-        clearall()
-        fireplace = True
-    elif (buttons & cwiid.BTN_2):
-        clearall()
-        brokenlight = True
-    elif (buttons & cwiid.BTN_MINUS):
-        danceparty = True
-    elif (buttons & cwiid.BTN_A):
-        clearall()
-    elif (buttons & cwiid.BTN_HOME):
-        if fireplace == True:
-            print("Gates of Hell") 
-            strip.setBrightness(255)
-            strip.show()
-            for x in range(len(heat)):
-                if x % 2 == 0:
-                    heat[x] = random.randint(240, 255)
-                else:
-                    heat[x] = random.randint(30, 60)
-        else:
-            curbright = strip.getBrightness()
-            for x in range(10):
-                strip.setBrightness(0)
-                strip.show()
-                time.sleep(0.01)
-                strip.setBrightness(curbright)
-                strip.show()
 
 
 def clearall():
