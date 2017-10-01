@@ -11,7 +11,7 @@ GPIO.setmode(GPIO.BCM)
 
 
 # Pins for Relay Box we start with -1 which means
-pins = [-1, 23, 24, 25, 17, 27, 22]
+pins = [-1, 23, -1, 24, -1, 25, -1, 17, -1,  27]
 
 for pin in pins:
     if pin > 0: # Don't "setup" if pin is -1
