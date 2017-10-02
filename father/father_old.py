@@ -40,7 +40,6 @@ rumble = 0
 numpixels = 144 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
-
 defaultColor = 0xF0F0FF
 defaultBright = 255
 flashColor = 0x00FF00
@@ -54,18 +53,6 @@ low_thres = 4
 strip.begin()           # Initialize pins for output
 strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
 
-
-
-eventarray = []
-eventarray.append({playsound: False, lightson: True, blacklight: False})
-eventarray.append({playsound: True, lightson: True, blacklight: False})
-eventarray.append({playsound: False, lightson: False, blacklight: True})
-
-eventidx = 0
-
-blacklight = False
-lightson = True
-playsound = False
 #Setting color to: 0xFF0000    # Green
 #Setting color to: 0xCC00CC    # Bright Teal
 #Setting color to: 0x66CC00    # Orange
@@ -79,6 +66,10 @@ playsound = False
 
 
 
+
+
+
+
 def main():
 
     #Connect to address given on command-line, if present
@@ -88,7 +79,6 @@ def main():
     global connected
     global strip
     global rumble
-    global lightson
     # Set the first pixel to red to show not connected
 #    strip.setPixelColor(0, 0x00FF00)    
 #    strip.show()
@@ -136,67 +126,49 @@ def main():
     ])
 def PlaySound():
     global strip
-    global blacklight
-    global lightson
-    global playsound
 
     sounds = [0, 0, 0]
-    channels = 2
+    channels = 1
     rate = 44100
     size = 1024
-    thunderfiles = ['/home/pi/father_zaps.wav']
     out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
     out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
     out_stream.setchannels(channels)
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
 
-    while True:
-        if lightson == True and playsound == False and blacklight == False:
-            strip.setBrightness(defaultBright)
-            setAllLEDS(strip, [defaultColor])
-            strip.show()
-            GPIO.output(GPIO_LIGHTS, False)
-            gevent.sleep(0.1)
-        elif lightson == True and playsound == True and blacklight == False:
-            while playsound == True:
-                if custream is None:
-                    curfile = random.choice(thunderfiles)
-                    curstream = open(curfile, "rb")
-                data = curstream.read(size)
-                tstart = 0
-                gevent.sleep(0.1)
-                while data and playsound == True:
-                    tstart += 1
-                    out_stream.write(data)
-                    data = curstream.read(size)
-                    rmsval = rms(data)
-                    sounds.append(rmsval)
-                    ug = sounds.pop(0)
-                    try:
-                        sounds_avg = sum(sounds) / len(sounds)
-                    except:
-                        sounds_avg = 0
-#            print(sounds_avg)
-                    if sounds_avg > hi_thres:
-                        strip.setBrightness(flashBright)
-                        setAllLEDS(strip, [flashColor])
-                    if sounds_avg < low_thres:
-                        strip.setBrightness(defaultBright)
-                        setAllLEDS(strip, [defaultColor])
-                    gevent.sleep(0.1)
-                curstream.close()
-                custream = None
-        elif lightson == False and playsound == False and blacklight == True:
-            setAllLEDS(strip, [0x000000])
-            strip.show()
-            GPIO.output(GPIO_LIGHTS, True)
-            GPIO.output(GPIO_AIR, True)
-            gevent.sleep(0.1)
-            time.sleep(1)
-            GPIO.output(GPIO_AIR, False)
-            gevent.sleep(0.1)
+    strip.setBrightness(defaultBright)
+    setAllLEDS(strip, [defaultColor])
+    strip.show()
 
+    #thunderfiles = ['/home/pi/father_shocks.wav']
+    thunderfiles = ['/home/pi/father_zaps.wav']
+
+    while True:
+        curfile = random.choice(thunderfiles)
+        curstream = open(curfile, "rb")
+
+        data = curstream.read(size)
+        tstart = 0
+        while data:
+            tstart += 1
+            out_stream.write(data)
+            data = curstream.read(size)
+            rmsval = rms(data)
+            sounds.append(rmsval)
+            ug = sounds.pop(0)
+            try:
+                sounds_avg = sum(sounds) / len(sounds)
+            except:
+                sounds_avg = 0
+#            print(sounds_avg)
+            if sounds_avg > hi_thres:
+                strip.setBrightness(flashBright)
+                setAllLEDS(strip, [flashColor])
+            if sounds_avg < low_thres:
+                strip.setBrightness(defaultBright)
+                setAllLEDS(strip, [defaultColor])
+        curstream.close()
 
     sys.exit(0)
 
@@ -234,37 +206,27 @@ def normal():
 
 
 def handle_buttons(buttons):
+    global turbo
+    global heat
     global strip
-    global eventarray
-    global eventidx
-    global playsound
-    global lighson
-    global blacklight
+    global colors
+    global color_idx
+    global brokenlight    
 
 
+    
     if (buttons & cwiid.BTN_PLUS):
+        print("Air")
         GPIO.output(GPIO_AIR, True)
     else:
         GPIO.output(GPIO_AIR, False)
+    
     if (buttons & cwiid.BTN_MINUS):
         print("Air")
         GPIO.output(GPIO_LIGHTS, True)
     else:
         GPIO.output(GPIO_LIGHTS, False)
-    if (buttons & cwiid.BTN_A):
-        if eventidx = len(eventarray) - 1:
-            eventidx = 0
-        else:
-            eventidx += 1
-        blacklight = eventarray[eventidx][blacklight]
-        lightson = eventarray[eventidx][lightson]
-        playsound = eventarray[eventidx][playsound]
 
-    if (buttons & cwiid.BTN_1):
-        eventidx = 0
-        blacklight = eventarray[eventidx][blacklight]
-        lightson = eventarray[eventidx][lightson]
-        playsound = eventarray[eventidx][playsound]
 
 def rms(frame):
     SHORT_NORMALIZE = (1.0/32768.0)
