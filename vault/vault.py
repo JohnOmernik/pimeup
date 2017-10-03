@@ -2,6 +2,7 @@
 import cwiid
 import sys
 import gevent
+import os
 import time
 import json
 import datetime
@@ -20,7 +21,7 @@ import struct
 import math
 
 WHOAMI = socket.gethostname()
-
+WHATAMI = os.path.basename(__file__).replace(".py", "")
 
 mesg = False
 rpt_mode = 0
@@ -262,6 +263,7 @@ def normal():
                 outrec = OrderedDict()
                 outrec['ts'] = curts
                 outrec['host'] = WHOAMI
+                outrec['script'] = WHATAMI
                 outrec['event_type'] = "battery"
                 outrec['event_data'] = wiimote.state['battery']
                 outrec['event_desc'] = "Wii remote battery status update"
@@ -305,6 +307,7 @@ def handle_buttons(buttons):
         outrec = OrderedDict()
         outrec['ts'] = curts
         outrec['host'] = WHOAMI
+        outrec['script'] = WHATAMI
         outrec['event_type'] = "index_change"
         outrec['event_data'] = eventarray[eventidx]
         outrec['event_desc'] = "Event list index changed from %s to %s" % (previdx, eventidx)

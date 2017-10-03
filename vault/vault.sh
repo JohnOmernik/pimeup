@@ -7,7 +7,7 @@
 # Default-Stop:
 # Short-Description: Fatehr Rage
 ### END INIT INFO
-DAEMON="father"
+DAEMON="vault"
 # Force 3.5mm audio if Pi 3
 #sudo amixer cset numid=3 1
 script="/home/pi/pimeup/${DAEMON}/${DAEMON}.py"
