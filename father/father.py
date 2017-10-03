@@ -10,15 +10,15 @@ from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
 import socket
-
+import requests
+import os
 import alsaaudio
 import wave
-import sys
 import struct
 import math
 
 WHOAMI = socket.gethostname()
-
+WHATAMI = os.path.basename(__file__).replace(".py", "")
 
 import RPi.GPIO as GPIO
 #GPIO Mode (BOARD / BCM)
@@ -39,7 +39,7 @@ numpixels = 288 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
-blacklightdelay = 2
+blacklightdelay = 1
 
 defaultColor = 0xF0F0FF
 defaultBright = 255
@@ -231,12 +231,14 @@ def normal():
                 curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
                 outrec = OrderedDict()
                 outrec['ts'] = curts
-                outrec['battery'] = wiimote.state['battery']
                 outrec['host'] = WHOAMI
-                print(json.dumps(outrec))
+                outrec['script'] = WHATAMI
+                outrec['event_type'] = "battery"
+                outrec['event_data'] = wiimote.state['battery']
+                outrec['event_desc'] = "Wii remote battery status update"
+                sendlog(outrec, False)
                 outrec = None
                 lasthb = curtime
-
     except KeyboardInterrupt:
         print("Exiting")
         setAllLEDS(strip, [0x000000])
@@ -258,7 +260,7 @@ def handle_buttons(buttons):
 
 
     if (buttons & cwiid.BTN_A):
-        GPIO.output(GPIO_AIR, False)
+        previdx = eventidx
         if eventidx == len(eventarray) - 1:
             eventidx = 0
         else:
@@ -268,11 +270,18 @@ def handle_buttons(buttons):
         lightson = eventarray[eventidx]["lightson"]
         playsound = eventarray[eventidx]["playsound"]
 
-    if (buttons & cwiid.BTN_1):
-        eventidx = 0
-        blacklight = eventarray[eventidx]["blacklight"]
-        lightson = eventarray[eventidx]["lightson"]
-        playsound = eventarray[eventidx]["playsound"]
+        curtime = int(time.time())
+        curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+        outrec = OrderedDict()
+        outrec['ts'] = curts
+        outrec['host'] = WHOAMI
+        outrec['script'] = WHATAMI
+        outrec['event_type'] = "index_change"
+        outrec['event_data'] = eventarray[eventidx]
+        outrec['event_desc'] = "Event list index changed from %s to %s" % (previdx, eventidx)
+        sendlog(outrec, False)
+        outrec = None
+
 
 def rms(frame):
     SHORT_NORMALIZE = (1.0/32768.0)
@@ -351,6 +360,21 @@ def callback(mesg_list, time):
  #           print 'Button Report: %.4X' % mesg[1]
         else:
             print 'Unknown Report'
+
+def sendlog(log, debug):
+    logurl = "http://hauntcontrol:5050/hauntlogs"
+    try:
+        r = requests.post(logurl, json=log)
+        if debug:
+            print("Posted to %s status code %s" % (logurl, r.status_code))
+            print(json.dumps(log))
+    except:
+        if debug:
+            print("Post to %s failed timed out?" % logurl)
+            print(json.dumps(log))
+
+
+
 
 def setAllLEDS(strip, colorlist):
     numcolors = len(colorlist)
