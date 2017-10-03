@@ -119,9 +119,9 @@ def main():
     # Enable the messages in callback
     wiimote.enable(cwiid.FLAG_MESG_IFC);
     wiimote.rpt_mode = rpt_mode
-#        gevent.spawn(normal),
 
     gevent.joinall([
+        gevent.spawn(normal),
         gevent.spawn(PlaySound),
     ])
 def PlaySound():
