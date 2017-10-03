@@ -39,6 +39,8 @@ numpixels = 288 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
+blacklightdelay = 2
+
 defaultColor = 0xF0F0FF
 defaultBright = 255
 flashColor = 0x00FF00
@@ -127,6 +129,7 @@ def PlaySound():
     global blacklight
     global lightson
     global playsound
+    global blacklightdelay
     print("start playsound")
     sounds = [0, 0, 0]
     channels = 2
@@ -202,6 +205,7 @@ def PlaySound():
                 print("Black light on")
                 setAllLEDS(strip, [0x000000])
                 strip.show()
+                time.sleep(blacklightdelay)
                 GPIO.output(GPIO_LIGHTS, True)
 #                GPIO.output(GPIO_AIR, True)
                 gevent.sleep(0.01)
