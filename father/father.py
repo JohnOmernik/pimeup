@@ -30,14 +30,12 @@ GPIO_LIGHTS = 13
 GPIO.setup(GPIO_AIR, GPIO.OUT)
 GPIO.setup(GPIO_LIGHTS, GPIO.OUT)
 
-
 mesg = False
 rpt_mode = 0
 wiimote = None
 connected = False
-turbo = False
 rumble = 0
-numpixels = 144 # Number of LEDs in strip
+numpixels = 288 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
@@ -57,9 +55,9 @@ strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
 
 
 eventarray = []
-eventarray.append({playsound: False, lightson: True, blacklight: False})
-eventarray.append({playsound: True, lightson: True, blacklight: False})
-eventarray.append({playsound: False, lightson: False, blacklight: True})
+eventarray.append({"playsound": False, "lightson": True, "blacklight": False})
+eventarray.append({"playsound": True, "lightson": True, "blacklight": False})
+eventarray.append({"playsound": False, "lightson": False, "blacklight": True})
 
 eventidx = 0
 
@@ -106,16 +104,9 @@ def main():
             time.sleep(2)
             rumble ^= 1
             wiimote.rumble = rumble
-
- #           strip.setPixelColor(0, 0x0000FF) # Set to green to show connection
- #           strip.show()
         except:
- #           strip.setPixelColor(0, 0xFFFF00) # Set to yellow to show failed connections
- #           strip.show()
             print("Trying Again, please press 1+2")
             time.sleep(2)
-  #          strip.setPixelColor(0, 0x00FF00) # Set back to red to show not connected
-  #          strip.show()
 
 
     wiimote.mesg_callback = callback
@@ -126,12 +117,9 @@ def main():
     # Enable the messages in callback
     wiimote.enable(cwiid.FLAG_MESG_IFC);
     wiimote.rpt_mode = rpt_mode
-
-#    print(wiimote.state)
-
+#        gevent.spawn(normal),
 
     gevent.joinall([
-        gevent.spawn(normal),
         gevent.spawn(PlaySound),
     ])
 def PlaySound():
@@ -139,7 +127,7 @@ def PlaySound():
     global blacklight
     global lightson
     global playsound
-
+    print("start playsound")
     sounds = [0, 0, 0]
     channels = 2
     rate = 44100
@@ -150,22 +138,33 @@ def PlaySound():
     out_stream.setchannels(channels)
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
-
+    curstream = None
+    blackon = False
+    lightwhite = False
     while True:
         if lightson == True and playsound == False and blacklight == False:
-            strip.setBrightness(defaultBright)
-            setAllLEDS(strip, [defaultColor])
-            strip.show()
-            GPIO.output(GPIO_LIGHTS, False)
-            gevent.sleep(0.1)
+            if lightwhite == False:
+                lightwhite = True
+                blackon = False
+                print("solid white loop")
+                strip.setBrightness(defaultBright)
+                setAllLEDS(strip, [defaultColor])
+                strip.show()
+                GPIO.output(GPIO_LIGHTS, False)
+                gevent.sleep(0.01)
+            else:
+                gevent.sleep(0.01)
         elif lightson == True and playsound == True and blacklight == False:
+            lightwhite = False
+            blackon = False
+            print("Zapping")
             while playsound == True:
-                if custream is None:
+                if curstream is None:
                     curfile = random.choice(thunderfiles)
                     curstream = open(curfile, "rb")
                 data = curstream.read(size)
                 tstart = 0
-                gevent.sleep(0.1)
+                gevent.sleep(0.01)
                 while data and playsound == True:
                     tstart += 1
                     out_stream.write(data)
@@ -184,19 +183,32 @@ def PlaySound():
                     if sounds_avg < low_thres:
                         strip.setBrightness(defaultBright)
                         setAllLEDS(strip, [defaultColor])
-                    gevent.sleep(0.1)
-                curstream.close()
-                custream = None
+                    gevent.sleep(0.01)
+                try:
+                    curstream.close()
+                except:
+                    pass
+                curstream = None
+            if playsound == False:
+                try:
+                    curstream.close()
+                except:
+                    pass
+                curstream = None
         elif lightson == False and playsound == False and blacklight == True:
-            setAllLEDS(strip, [0x000000])
-            strip.show()
-            GPIO.output(GPIO_LIGHTS, True)
-            GPIO.output(GPIO_AIR, True)
-            gevent.sleep(0.1)
-            time.sleep(1)
-            GPIO.output(GPIO_AIR, False)
-            gevent.sleep(0.1)
-
+            if blackon == False:
+                blackon = True
+                lightwhite = False
+                print("Black light on")
+                setAllLEDS(strip, [0x000000])
+                strip.show()
+                GPIO.output(GPIO_LIGHTS, True)
+#                GPIO.output(GPIO_AIR, True)
+                gevent.sleep(0.01)
+            else:
+                gevent.sleep(0.01)
+ #               time.sleep(2)
+#                GPIO.output(GPIO_LIGHTS, False)
 
     sys.exit(0)
 
@@ -210,7 +222,6 @@ def normal():
     try:
         while True:
             gevent.sleep(0.01)
-            time.sleep(0.001)
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
                 curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
@@ -238,33 +249,26 @@ def handle_buttons(buttons):
     global eventarray
     global eventidx
     global playsound
-    global lighson
+    global lightson
     global blacklight
 
 
-    if (buttons & cwiid.BTN_PLUS):
-        GPIO.output(GPIO_AIR, True)
-    else:
-        GPIO.output(GPIO_AIR, False)
-    if (buttons & cwiid.BTN_MINUS):
-        print("Air")
-        GPIO.output(GPIO_LIGHTS, True)
-    else:
-        GPIO.output(GPIO_LIGHTS, False)
     if (buttons & cwiid.BTN_A):
-        if eventidx = len(eventarray) - 1:
+        GPIO.output(GPIO_AIR, False)
+        if eventidx == len(eventarray) - 1:
             eventidx = 0
         else:
             eventidx += 1
-        blacklight = eventarray[eventidx][blacklight]
-        lightson = eventarray[eventidx][lightson]
-        playsound = eventarray[eventidx][playsound]
+        print("Setting index to: %s" % eventidx)
+        blacklight = eventarray[eventidx]["blacklight"]
+        lightson = eventarray[eventidx]["lightson"]
+        playsound = eventarray[eventidx]["playsound"]
 
     if (buttons & cwiid.BTN_1):
         eventidx = 0
-        blacklight = eventarray[eventidx][blacklight]
-        lightson = eventarray[eventidx][lightson]
-        playsound = eventarray[eventidx][playsound]
+        blacklight = eventarray[eventidx]["blacklight"]
+        lightson = eventarray[eventidx]["lightson"]
+        playsound = eventarray[eventidx]["playsound"]
 
 def rms(frame):
     SHORT_NORMALIZE = (1.0/32768.0)
