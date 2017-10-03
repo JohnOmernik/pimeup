@@ -2,13 +2,12 @@
 import cwiid
 import sys
 import gevent
-import os
 import time
-import json
 import datetime
 import atexit
 import json
 import requests
+import os
 from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
@@ -16,7 +15,6 @@ import socket
 
 import alsaaudio
 import wave
-import sys
 import struct
 import math
 
