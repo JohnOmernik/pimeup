@@ -53,7 +53,7 @@ my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
 pulse_colors = []
-pulse_mod = 5
+pulse_mod = 8
 
 eventarray = []
 eventarray.append({"playsound": False, "normallight": True, "goldlight": False})
@@ -172,8 +172,12 @@ def Lights():
         elif goldlight == True and goldon == True and lighton == False:
             for x in pulse_colors:
                 setAllLEDS(strip, [int(x.replace("#", ''), 16)])
+                if goldlight == False:
+                    break
                 gevent.sleep(0.05)
             for x in reversed(pulse_colors):
+                if goldlight == False:
+                    break
                 setAllLEDS(strip, [int(x.replace("#", ''), 16)])
                 gevent.sleep(0.05)
         gevent.sleep(0.01)
@@ -234,14 +238,14 @@ def PlaySound():
 def sendlog(log, debug):
     logurl = "http://hauntcontrol:5050/hauntlogs"
     try:
-        r = requests.post(logurl, json=outrec)
+        r = requests.post(logurl, json=log)
         if debug:
             print("Posted to %s status code %s" % (logurl, r.status_code))
-            print(json.dumps(outrec))
+            print(json.dumps(log))
     except:
         if debug:
             print("Post to %s failed timed out?" % logurl)
-            print(json.dumps(outrec))
+            print(json.dumps(log))
 
 
 def normal():
@@ -261,7 +265,7 @@ def normal():
                 outrec['event_type'] = "battery"
                 outrec['event_data'] = wiimote.state['battery']
                 outrec['event_desc'] = "Wii remote battery status update"
-                sendlog(outrec, True)
+                sendlog(outrec, False)
                 outrec = None
                 lasthb = curtime
 
@@ -286,14 +290,28 @@ def handle_buttons(buttons):
 
 
     if (buttons & cwiid.BTN_A):
+        previdx = eventidx
         if eventidx == len(eventarray) - 1:
             eventidx = 0
         else:
             eventidx += 1
         print("Setting index to: %s" % eventidx)
+        curtime = int(time.time())
         goldlight = eventarray[eventidx]["goldlight"]
         normallight = eventarray[eventidx]["normallight"]
         playsound = eventarray[eventidx]["playsound"]
+
+        curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+        outrec = OrderedDict()
+        outrec['ts'] = curts
+        outrec['host'] = WHOAMI
+        outrec['event_type'] = "index_change"
+        outrec['event_data'] = eventarray[eventidx]
+        outrec['event_desc'] = "Event list index changed from %s to %s" % (previdx, eventidx)
+        sendlog(outrec, False)
+        outrec = None
+
+
 
 
 def rms(frame):
