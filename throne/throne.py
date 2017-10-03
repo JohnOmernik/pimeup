@@ -3,6 +3,7 @@
 import time
 import random
 import sys
+import cwiid
 import json
 import gevent
 from collections import OrderedDict
@@ -16,20 +17,25 @@ import socket
 
 
 WHOAMI = socket.gethostname()
-#m = alsaaudio.Mixer('PCM')
-#current_volume = m.getvolume() # Get the current Volume
-#print("Cur Vol: %s " % current_volume)
-#m.setvolume(100) # Set the volume to 70%.
-#current_volume = m.getvolume() # Get the current Volume
-#print("Cur Vol: %s " % current_volume)
+m = alsaaudio.Mixer('PCM')
+current_volume = m.getvolume() # Get the current Volume
+print("Cur Vol: %s " % current_volume)
+m.setvolume(100) # Set the volume to 70%.
+current_volume = m.getvolume() # Get the current Volume
+print("Cur Vol: %s " % current_volume)
+
+mesg = False
+rpt_mode = 0
+wiimote = None
+connected = False
+rumble = 0
 
 
-
-numpixels = 204 # Number of LEDs in strip
+numpixels = 264 # Number of LEDs in strip
 # Here's how to control the strip from any two GPIO pins:
 datapin   = 23
 clockpin  = 24
-fire_colors = [ "#001100", "#005500", "#00FF00", "#33FFFF", "#FFFFFF" ] 
+fire_colors = [ "#001100", "#005500", "#00FF00", "#33FFFF", "#FFFFFF" ]
 outtimes = {}
 
 mydelays = [0.001]
@@ -38,7 +44,7 @@ heat = []
 
 heat = []
 for x in range(numpixels):
-    heat.append(255)
+    heat.append(30)
 COOLING = 15
 num_colors = 100
 my_colors = []
@@ -49,11 +55,11 @@ fireplacestarttime = 0
 soundstarttime = 0
 curplay = 66
 lasthb = 0
-hbinterval = 30
+hbinterval = 10
 fireplace = True
 fireplacestart = False
 soundstart = False
-
+soundplaying = False
 #Setting color to: 0xFF0000    # Green
 #Setting color to: 0xCC00CC    # Bright Teal
 #Setting color to: 0x66CC00    # Orange
@@ -88,6 +94,43 @@ def main():
       #  print("Color: %s" % hex_to_RGB(y))
             allcolors.append(y)
 
+
+   #Connect to address given on command-line, if present
+    print 'Put Wiimote in discoverable mode now (press 1+2)...'
+    global wiimote
+    global rpt_mode
+    global connected
+    global rumble
+
+
+    print("Trying Connection")
+    print ("Press 1+2")
+    while not connected:
+        try:
+            wiimote = cwiid.Wiimote()
+            print("Connected!")
+            connected = True
+            rumble ^= 1
+            wiimote.rumble = rumble
+            time.sleep(2)
+            rumble ^= 1
+            wiimote.rumble = rumble
+
+        except:
+            print("Trying Again, please press 1+2")
+            time.sleep(2)
+
+
+    wiimote.mesg_callback = callback
+
+    print("For LED we enable Button")
+    rpt_mode ^= cwiid.RPT_BTN
+
+    # Enable the messages in callback
+    wiimote.enable(cwiid.FLAG_MESG_IFC);
+    wiimote.rpt_mode = rpt_mode
+
+
     gevent.joinall([
         gevent.spawn(normal),
         gevent.spawn(FirePlace),
@@ -105,29 +148,35 @@ def normal():
     global soundstarttime
     global heat
     global outtimes
+    global soundplaying
     try:
         while True:
             gevent.sleep(0.001)
             curtime = int(time.time())
-            if curtime - fireplacestarttime > curplay or curtime - soundstarttime > curplay:
-                # Well time to reset
-                print("Reseting")
-                print(heat)
-                fireplacestart = True
-                soundstart = True
-                fireplacestarttime = curtime
-                soundstarttime = curtime
-            else:
-               if (curtime - fireplacestarttime) % 5 == 0:
-                    if str(curtime) not in outtimes:
-                        curheat = sum(heat) / float(len(heat))
-                        print("Current offset: %s - Avg Heat: %s" % (curtime - fireplacestarttime, curheat))
-                        outtimes[str(curtime)] = 1
+            # Just not doing anything
+            #if curtime - fireplacestarttime > curplay or curtime - soundstarttime > curplay:
+            #    # Well time to reset
+            #    print("Reseting")
+            #    print(heat)
+            #    fireplacestart = True
+            #    soundstart = True
+            #    soundplaying = False
+            #    fireplacestarttime = curtime
+            #    soundstarttime = curtime
+            #    outtimes = {}
+            #    gevent.sleep(0.001)
+            #else:
+            #   if (curtime - fireplacestarttime) % 5 == 0:
+            #        if str(curtime) not in outtimes:
+            #            curheat = sum(heat) / float(len(heat))
+            #            print("Current offset: %s - Avg Heat: %s" % (curtime - fireplacestarttime, curheat))
+            #            outtimes[str(curtime)] = 1
 
             if curtime - lasthb > hbinterval:
                 curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
                 outrec = OrderedDict()
                 outrec['ts'] = curts
+                outrec['battery'] = wiimote.state['battery']
                 outrec['host'] = WHOAMI
                 print(json.dumps(outrec))
                 outrec = None
@@ -142,6 +191,8 @@ def normal():
 
 def playSound():
     global soundstart
+    global fireplacestart
+    global soundplaying
     sounds = [0, 0, 0]
     channels = 2
     rate = 44100
@@ -163,7 +214,8 @@ def playSound():
             curstream = open(curfile, "rb")
             tstart = 0
             soundstart = False
-        gevent.sleep(0.001)
+            soundplaying = True
+            fireplacestart = True
         if curstream is not None:
             data = curstream.read(size)
             while data:
@@ -172,6 +224,11 @@ def playSound():
                 data = curstream.read(size)
                 gevent.sleep(0.001)
             curstream.close()
+            curstream = None
+            soundplaying = False
+        else:
+            soundplaying = False
+        gevent.sleep(0.001)
 
 
 def FirePlace():
@@ -218,10 +275,6 @@ def FirePlace():
                     if heat[j] < 0:
                         heat[j] = 0
                     newcolor = int((heat[j] * len(allcolors)) / 256)
-#        print("Pixel: %s has a heat value of %s and a newcolor idx of %s" % (j, heat[j], newcolor))
-#                print("Setting Color: %s" % hex_to_RGB(allcolors[newcolor]))
-#   
-#                 print("Setting color to: 0x%0.2X" % int(allcolors[newcolor].replace("#", ''), 16))
                     strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
                 gevent.sleep(random.choice(mydelays))
                 strip.show()
@@ -260,9 +313,6 @@ def rms(frame):
         return rms * 10000
 
 
-
-
-
 def color_dict(gradient):
     ''' Takes in a list of RGB sub-lists and returns dictionary of
     colors in RGB and hex form for use in a graphing function
@@ -293,7 +343,19 @@ def linear_gradient(start_hex, finish_hex="#FFFFFF", n=10):
 
     return color_dict(RGB_list)
 
+def handle_buttons(buttons):
+    global heat
+    global strip
+    global soundstart
+    global soundplaying
+    
+    if (buttons & cwiid.BTN_A):
+        print("soundplaying in A: %s" % soundplaying)
+        if soundplaying == False:
+            print("making soundstart true")
+            soundstart = True
 
+    gevent.sleep(0.001)
 
 
 def hex_to_RGB(hex):
@@ -309,7 +371,14 @@ def RGB_to_hex(RGB):
     return "#"+"".join(["0{0:x}".format(v) if v < 16 else
             "{0:x}".format(v) for v in RGB])
 
+def callback(mesg_list, time):
 
+
+    for mesg in mesg_list:
+        if mesg[0] == cwiid.MESG_BTN:
+            handle_buttons(mesg[1])
+        else:
+            print 'Unknown Report'
 
 if __name__ == "__main__":
     main()
