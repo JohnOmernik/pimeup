@@ -1,49 +1,87 @@
 #!/usr/bin/python
-#Gateway
 import time
 import random
 import sys
 import alsaaudio
 import wave
-import sys
+import gevent
 import struct
+import json
+import socket
+import requests
+import os
+from collections import OrderedDict
 import math
 from dotstar import Adafruit_DotStar
 
+
+WHOAMI = socket.gethostname()
+WHATAMI = os.path.basename(__file__).replace(".py", "")
+
 m = alsaaudio.Mixer('PCM')
 current_volume = m.getvolume() # Get the current Volume
-#print("Cur Vol: %s " % current_volume)
+print("Cur Vol: %s " % current_volume)
 m.setvolume(100) # Set the volume to 70%.
 current_volume = m.getvolume() # Get the current Volume
 #print("Cur Vol: %s " % current_volume)
 
-
-
-numpixels = 60 # Number of LEDs in strip
+numpixels = 120 # Number of LEDs in strip
 # Here's how to control the strip from any two GPIO pins:
 datapin   = 23
 clockpin  = 24
-defaultColor = 0x990000
+defaultColor = 0x000099
 defaultBright = 128
-flashColor = 0xFF9933
+flashColor = 0x009999
 flashBright = 255
-
+lasthb = 0
+hbinterval = 30
 strip     = Adafruit_DotStar(numpixels, datapin, clockpin)
 strip.setBrightness(defaultBright)
 strip.begin()           # Initialize pins for output
 
-hi_thres = 6
+hi_thres = 10
 low_thres = 5
-
 beat = False
+
 def main():
     global strip
     global beat
 
+    logevent("startup", "startup", "Just started and ready to run")
+
+    strip.setBrightness(defaultBright)
+    setAllLEDS(strip, [defaultColor])
+    strip.show()
+    gevent.joinall([
+        gevent.spawn(PlaySound),
+        gevent.spawn(normal),
+    ])
+
+
+
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
+
+
+def PlaySound():
+    global strip
+    global beat
     sounds = [0, 0, 0]
 
-
-    channels = 1
+    channels = 2
     rate = 44100
     size = 1024
     out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
@@ -52,16 +90,11 @@ def main():
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
 
-    strip.setBrightness(defaultBright)
-    setAllLEDS(strip, [defaultColor])
-    strip.show()
-
-    thunderfiles = ['/home/pi/haunt_electric.wav']
+    thunderfiles = ['/home/pi/haunt_electric1.wav']
 
     while True:
         curfile = random.choice(thunderfiles)
         curstream = open(curfile, "rb")
-
         data = curstream.read(size)
         tstart = 0
         while data:
@@ -75,18 +108,39 @@ def main():
                 sounds_avg = sum(sounds) / len(sounds)
             except:
                 sounds_avg = 0
-#            print(sounds_avg)
             if sounds_avg > hi_thres and beat == False:
                 strip.setBrightness(flashBright)
                 setAllLEDS(strip, [flashColor])
-                beat = True 
+                beat = True
             if sounds_avg < low_thres and beat == True:
                 strip.setBrightness(defaultBright)
                 setAllLEDS(strip, [defaultColor])
                 beat = False
+            gevent.sleep(0.001)
         curstream.close()
 
     sys.exit(0)
+
+def normal():
+    global strip
+    global lasthb
+    global hbinterval
+    try:
+        while True:
+            curtime = int(time.time())
+            if curtime - lasthb > hbinterval:
+                logevent("heartbeat", "Working", "Standard HB")
+                lasthb = curtime
+            gevent.sleep(0.001)
+    except KeyboardInterrupt:
+        print("Exiting")
+        setAllLEDS(strip, [0x000000])
+        strip.setBrightness(0)
+        strip.show()
+    wiimote.close()
+    sys.exit()
+
+
 
 def setAllLEDS(strip, colorlist):
     for x in range(numpixels):
@@ -108,6 +162,19 @@ def rms(frame):
         sum_squares += n*n
         rms = math.pow(sum_squares/count,0.5);
         return rms * 10000
+
+def sendlog(log, debug):
+    logurl = "http://hauntcontrol:5050/hauntlogs"
+    try:
+        r = requests.post(logurl, json=log)
+        if debug:
+            print("Posted to %s status code %s" % (logurl, r.status_code))
+            print(json.dumps(log))
+    except:
+        if debug:
+            print("Post to %s failed timed out?" % logurl)
+            print(json.dumps(log))
+
 
 
 

@@ -162,7 +162,7 @@ def normal():
                 outrec['script'] = WHATAMI
                 outrec['event_type'] = "heartbeat"
                 outrec['event_data'] = "Working" #wiimote.state['battery']
-                outrec['event_desc'] = "Standard Audio"
+                outrec['event_desc'] = "Standard Audio and lights"
                 sendlog(outrec, False)
                 outrec = None
                 lasthb = curtime
