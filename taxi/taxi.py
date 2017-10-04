@@ -34,18 +34,13 @@ rumble = 0
 
 def main():
 
-
-
+    logevent("startup", "startup", "Just started and ready to run")
     #Connect to address given on command-line, if present
     print 'Put Wiimote in discoverable mode now (press 1+2)...'
     global wiimote
     global rpt_mode
     global connected
     global strip
-    # Set the first pixel to red to show not connected
-
-
-
     global rumble
 
 
@@ -61,6 +56,7 @@ def main():
             time.sleep(2)
             rumble ^= 1
             wiimote.rumble = rumble
+            logevent("wii", "connect", "Wii remote just synced up")
         except:
             print("Trying Again, please press 1+2")
             time.sleep(2)
@@ -86,25 +82,31 @@ def normal():
     global hbinterval
     try:
         while True:
-            gevent.sleep(0.01)
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
-                curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-                outrec = OrderedDict()
-                outrec['ts'] = curts
-                outrec['host'] = WHOAMI
-                outrec['script'] = WHATAMI
-                outrec['event_type'] = "battery"
-                outrec['event_data'] = wiimote.state['battery']
-                outrec['event_desc'] = "Wii remote battery status update"
-                sendlog(outrec, False)
-                outrec = None
+                logevent("heartbeat", "Working", "Standard HB")
                 lasthb = curtime
+            gevent.sleep(0.001)
     except KeyboardInterrupt:
         print("Exiting")
     wiimote.close()
     sys.exit()
 
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
 
 def sendlog(log, debug):
     logurl = "http://hauntcontrol:5050/hauntlogs"
@@ -147,19 +149,7 @@ def handle_buttons(buttons):
         if nextval > 0:
             GPIO.output(nextval, True)
         #Button Pressed Log event!
-        curtime = int(time.time())
-        curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-        outrec = OrderedDict()
-        outrec['ts'] = curts
-        outrec['host'] = WHOAMI
-        outrec['script'] = WHATAMI
-        outrec['event_type'] = "index_change"
-        outrec['event_data'] = OrderedDict({"previdx": curidx, "prevval": curval, "newidx": nextidx, "newval": nextval})
-        outrec['event_desc'] = "Event list index changed from %s to %s" % (curidx, nextidx)
-        sendlog(outrec, False)
-        outrec = None
-
-
+        logevent("index_change", OrderedDict({"previdx": curidx, "prevval": curval, "newidx": nextidx, "newval": nextval}), "Event list index changed from %s to %s" % (curidx, nextidx))
         curidx = nextidx        
         
 
