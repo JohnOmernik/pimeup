@@ -57,7 +57,7 @@ fireplacestarttime = 0
 soundstarttime = 0
 curplay = 66
 lasthb = 0
-hbinterval = 10
+hbinterval = 30
 fireplace = True
 fireplacestart = False
 soundstart = False
@@ -357,6 +357,7 @@ def handle_buttons(buttons):
     if (buttons & cwiid.BTN_A):
         print("soundplaying in A: %s" % soundplaying)
         if soundplaying == False:
+            soundstart = True
             logevent("index_change", "reset", "Reset the index to start loop again")
     gevent.sleep(0.001)
 
