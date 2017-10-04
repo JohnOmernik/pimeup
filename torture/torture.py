@@ -4,6 +4,8 @@ import sys
 import gevent
 import time
 import json
+import os
+import requests
 import datetime
 import atexit
 from collections import OrderedDict
@@ -22,14 +24,14 @@ current_volume = m.getvolume() # Get the current Volume
 print("New Cur Vol: %s " % current_volume)
 
 WHOAMI = socket.gethostname()
-
-import RPi.GPIO as GPIO
+WHATAMI = os.path.basename(__file__).replace(".py", "")
+#import RPi.GPIO as GPIO
 #GPIO Mode (BOARD / BCM)
-GPIO.setmode(GPIO.BCM)
+#GPIO.setmode(GPIO.BCM)
  #set GPIO Pins
-GPIO_RELAY = 16
+#GPIO_RELAY = 16
 #set GPIO direction (IN / OUT)
-GPIO.setup(GPIO_RELAY, GPIO.OUT)
+#GPIO.setup(GPIO_RELAY, GPIO.OUT)
 
 mesg = False
 rpt_mode = 0
@@ -37,7 +39,7 @@ wiimote = None
 connected = False
 turbo = False
 rumble = 0
-numpixels = 60 # Number of LEDs in strip
+numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
@@ -49,7 +51,7 @@ strip     = Adafruit_DotStar(numpixels, datapin, clockpin)
 strip.begin()           # Initialize pins for output
 strip.setBrightness(255) # Limit brightness to ~1/4 duty cycle
 
-mydelays = [0.01]
+mydelays = [0.1]
 heat = []
 for x in range(numpixels):
     heat.append(random.randint(0, 50))
@@ -60,13 +62,11 @@ brokenlight = False
 light = False
 
 
-LIGHTON = 60
-LIGHTOFF = 15
 COOLING = 60
-SPARKING = 60
+SPARKING = 90
 gsparkitup = True
 fire_colors = [ "#000033", "#0033FF", "#0099FF", "#00FFFF"]
-num_colors = 100
+num_colors = 80
 my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
@@ -102,7 +102,7 @@ def main():
             allcolors.append(y)
 
     #Connect to address given on command-line, if present
-    print 'Put Wiimote in discoverable mode now (press 1+2)...'
+#    print 'Put Wiimote in discoverable mode now (press 1+2)...'
     global wiimote
     global rpt_mode
     global connected
@@ -110,31 +110,31 @@ def main():
     global rumble
 
 
-    print("Trying Connection")
-    print ("Press 1+2")
-    while not connected:
-        try:
-            wiimote = cwiid.Wiimote()
-            print("Connected!")
-            connected = True
-            rumble ^= 1
-            wiimote.rumble = rumble
-            time.sleep(2)
-            rumble ^= 1
-            wiimote.rumble = rumble
-        except:
-            print("Trying Again, please press 1+2")
-            time.sleep(2)
+#    print("Trying Connection")
+#    print ("Press 1+2")
+#    while not connected:
+#        try:
+#            wiimote = cwiid.Wiimote()
+#            print("Connected!")
+#            connected = True
+#            rumble ^= 1
+#            wiimote.rumble = rumble
+#            time.sleep(2)
+#            rumble ^= 1
+#            wiimote.rumble = rumble
+#        except:
+#            print("Trying Again, please press 1+2")
+#            time.sleep(2)
 
 
-    wiimote.mesg_callback = callback
+ #   wiimote.mesg_callback = callback
 
-    print("For LED we enable Button")
-    rpt_mode ^= cwiid.RPT_BTN
+  #  print("For LED we enable Button")
+  #  rpt_mode ^= cwiid.RPT_BTN
 
     # Enable the messages in callback
-    wiimote.enable(cwiid.FLAG_MESG_IFC);
-    wiimote.rpt_mode = rpt_mode
+   # wiimote.enable(cwiid.FLAG_MESG_IFC);
+   # wiimote.rpt_mode = rpt_mode
 
 #    print(wiimote.state)
 
@@ -153,15 +153,17 @@ def normal():
     try:
         while True:
             gevent.sleep(0.01)
-            time.sleep(0.001)
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
                 curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
                 outrec = OrderedDict()
                 outrec['ts'] = curts
-                outrec['battery'] = wiimote.state['battery']
                 outrec['host'] = WHOAMI
-                print(json.dumps(outrec))
+                outrec['script'] = WHATAMI
+                outrec['event_type'] = "heartbeat"
+                outrec['event_data'] = "Working" #wiimote.state['battery']
+                outrec['event_desc'] = "Standard Audio"
+                sendlog(outrec, False)
                 outrec = None
                 lasthb = curtime
 
@@ -191,7 +193,7 @@ def PlaySound():
     while True:
         curfile = random.choice(soundfiles)
         curstream = open(curfile, "rb")
-        gevent.sleep(0.001)
+        gevent.sleep(0.01)
         if curstream is not None:
             data = curstream.read(size)
             while data:
@@ -203,7 +205,17 @@ def PlaySound():
 
 
 
-
+def sendlog(log, debug):
+    logurl = "http://hauntcontrol:5050/hauntlogs"
+    try:
+        r = requests.post(logurl, json=log)
+        if debug:
+            print("Posted to %s status code %s" % (logurl, r.status_code))
+            print(json.dumps(log))
+    except:
+        if debug:
+            print("Post to %s failed timed out?" % logurl)
+            print(json.dumps(log))
 
 def FirePlace():
     global gsparkitup
@@ -225,7 +237,7 @@ def FirePlace():
                     if random.randint(0, 255) < COOLING:
                         tval = heat[i] - random.randint(0, ((COOLING * 10) / numpixels) + 2)
                         heat[i] = tval
-                gevent.sleep(random.choice(mydelays))
+                gevent.sleep(0.1)
 
     # This is supposed to be a diffusing effect I think
                 k = numpixels -3
@@ -234,7 +246,7 @@ def FirePlace():
                         tval = (heat[k-1] + heat[ k- 2 ] + heat[ k- 2] ) / 3
                         heat[k] = tval
                         k = k - 1
-                gevent.sleep(random.choice(mydelays))
+                gevent.sleep(0.1)
 
     # Now let's see if we set any sparks!
                 if gsparkitup == True:
@@ -256,9 +268,8 @@ def FirePlace():
 #   
 #                 print("Setting color to: 0x%0.2X" % int(allcolors[newcolor].replace("#", ''), 16))
                     strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
-                gevent.sleep(random.choice(mydelays))
                 strip.show()
-                gevent.sleep(random.choice(mydelays))
+                gevent.sleep(0.1)
             else:
                 gevent.sleep(0.1)
     except KeyboardInterrupt:
