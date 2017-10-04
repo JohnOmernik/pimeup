@@ -1,2 +1,2 @@
-sudo update-rc.d spencer defaults
-sudo update-rc.d spencer enable
+sudo update-rc.d torture defaults
+sudo update-rc.d torture enable

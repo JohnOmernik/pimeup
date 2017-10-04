@@ -14,8 +14,6 @@ from dotstar import Adafruit_DotStar
 import socket
 import alsaaudio
 
-
-WHOAMI = socket.gethostname()
 m = alsaaudio.Mixer('PCM')
 current_volume = m.getvolume() # Get the current Volume#
 print("Cur Vol: %s " % current_volume)
@@ -25,6 +23,8 @@ print("New Cur Vol: %s " % current_volume)
 
 WHOAMI = socket.gethostname()
 WHATAMI = os.path.basename(__file__).replace(".py", "")
+
+
 #import RPi.GPIO as GPIO
 #GPIO Mode (BOARD / BCM)
 #GPIO.setmode(GPIO.BCM)
@@ -33,13 +33,13 @@ WHATAMI = os.path.basename(__file__).replace(".py", "")
 #set GPIO direction (IN / OUT)
 #GPIO.setup(GPIO_RELAY, GPIO.OUT)
 
-mesg = False
-rpt_mode = 0
-wiimote = None
-connected = False
-turbo = False
-rumble = 0
-numpixels = 120 # Number of LEDs in strip
+#mesg = False
+#rpt_mode = 0
+#wiimote = None
+#connected = False
+#turbo = False
+#rumble = 0
+numpixels = 60 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
@@ -58,15 +58,11 @@ for x in range(numpixels):
 
 #Fireplace Effect
 
-brokenlight = False
-light = False
-
-
-COOLING = 60
+COOLING = 50
 SPARKING = 90
 gsparkitup = True
 fire_colors = [ "#000033", "#0033FF", "#0099FF", "#00FFFF"]
-num_colors = 80
+num_colors = 30
 my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
@@ -86,7 +82,11 @@ fireplace = True
 
 
 def main():
-
+    global allcolors
+    global color_dict
+    global my_colors
+    global num_colors
+    global fire_colors
 
     for x in range(len(fire_colors)):
         if x == len(fire_colors) -1:
@@ -103,11 +103,11 @@ def main():
 
     #Connect to address given on command-line, if present
 #    print 'Put Wiimote in discoverable mode now (press 1+2)...'
-    global wiimote
-    global rpt_mode
-    global connected
-    global strip
-    global rumble
+   # global wiimote
+   # global rpt_mode
+   # global connected
+   # global strip
+   # global rumble
 
 
 #    print("Trying Connection")
@@ -139,10 +139,11 @@ def main():
 #    print(wiimote.state)
 
     gevent.joinall([
-        gevent.spawn(normal),
-        gevent.spawn(FirePlace),
         gevent.spawn(PlaySound),
+        gevent.spawn(FirePlace),
+        gevent.spawn(normal),
     ])
+
 
 
 def normal():
@@ -152,7 +153,6 @@ def normal():
     global hbinterval
     try:
         while True:
-            gevent.sleep(0.01)
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
                 curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
@@ -166,7 +166,7 @@ def normal():
                 sendlog(outrec, False)
                 outrec = None
                 lasthb = curtime
-
+            gevent.sleep(15)
     except KeyboardInterrupt:
         print("Exiting")
         setAllLEDS(strip, [0x000000])
@@ -178,7 +178,6 @@ def normal():
 
 
 def PlaySound():
-    sounds = [0, 0, 0]
     channels = 2
     rate = 44100
     size = 1024
@@ -187,10 +186,11 @@ def PlaySound():
     out_stream.setchannels(channels)
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
-
+    print("In Play sound")
     soundfiles = ['/home/pi/torture_audio.wav']
     curstream = None
     while True:
+        print("Opening File")
         curfile = random.choice(soundfiles)
         curstream = open(curfile, "rb")
         gevent.sleep(0.01)
@@ -263,10 +263,6 @@ def FirePlace():
                     if heat[j] < 0:
                         heat[j] = 0
                     newcolor = int((heat[j] * len(allcolors)) / 256)
-#        print("Pixel: %s has a heat value of %s and a newcolor idx of %s" % (j, heat[j], newcolor))
-#                print("Setting Color: %s" % hex_to_RGB(allcolors[newcolor]))
-#   
-#                 print("Setting color to: 0x%0.2X" % int(allcolors[newcolor].replace("#", ''), 16))
                     strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
                 strip.show()
                 gevent.sleep(0.1)
@@ -284,8 +280,6 @@ def handle_buttons(buttons):
     global heat
     global strip
     global fireplace
-
-
     if (buttons & cwiid.BTN_A):
         print("Squirting")
         GPIO.output(GPIO_RELAY, True)
@@ -294,15 +288,6 @@ def handle_buttons(buttons):
 
 
 
-def clearall():
-    global strip
-    global fireplace
-    global brokenlight
-    global danceparty
-    fireplace = False
-    danceparty = False
-    brokenlight = False
-    setAllLEDS(strip, [0x000000])
 
 
 #BTN_1', 'BTN_2', 'BTN_A', 'BTN_B', 'BTN_DOWN', 'BTN_HOME', 'BTN_LEFT', 'BTN_MINUS', 'BTN_PLUS', 'BTN_RIGHT', 'BTN_UP',
