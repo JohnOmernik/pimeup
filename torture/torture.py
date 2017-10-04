@@ -87,7 +87,7 @@ def main():
     global my_colors
     global num_colors
     global fire_colors
-
+    logevent("startup", "startup", "Just started and ready to run")
     for x in range(len(fire_colors)):
         if x == len(fire_colors) -1:
             pass
@@ -145,6 +145,21 @@ def main():
     ])
 
 
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
 
 def normal():
     global strip
@@ -155,18 +170,9 @@ def normal():
         while True:
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
-                curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-                outrec = OrderedDict()
-                outrec['ts'] = curts
-                outrec['host'] = WHOAMI
-                outrec['script'] = WHATAMI
-                outrec['event_type'] = "heartbeat"
-                outrec['event_data'] = "Working" #wiimote.state['battery']
-                outrec['event_desc'] = "Standard Audio and lights"
-                sendlog(outrec, False)
-                outrec = None
+                logevent("heartbeat", "Working", "Standard HB")
                 lasthb = curtime
-            gevent.sleep(15)
+            gevent.sleep(0.001)
     except KeyboardInterrupt:
         print("Exiting")
         setAllLEDS(strip, [0x000000])
@@ -174,7 +180,6 @@ def normal():
         strip.show()
     wiimote.close()
     sys.exit()
-
 
 
 def PlaySound():
