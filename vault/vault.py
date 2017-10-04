@@ -56,7 +56,7 @@ pulse_mod = 8
 
 eventarray = []
 eventarray.append({"playsound": False, "normallight": True, "goldlight": False})
-eventarray.append({"playsound": False, "normallight": False, "goldlight": True})
+eventarray.append({"playsound": True, "normallight": False, "goldlight": True})
 
 eventidx = 0
 
@@ -157,16 +157,16 @@ def Lights():
             if goldon == True:
                 setAllLEDS(strip, [0x000000])
                 goldon = False
-                gevent.sleep(0.01)
+                gevent.sleep(0.001)
             strip.setBrightness(defaultBright)
             setAllLEDS(strip, [defaultColor])
             lighton = True
-            gevent.sleep(0.01)
+            gevent.sleep(0.001)
         elif goldlight == True and lighton == True and goldon == False:
             goldon = True
             for x in allcolors:
                 setAllLEDS(strip, [int(x.replace("#", ''), 16)])
-                gevent.sleep(0.01)
+                gevent.sleep(0.001)
             lighton = False
         elif goldlight == True and goldon == True and lighton == False:
             for x in pulse_colors:
@@ -193,7 +193,7 @@ def PlaySound():
     channels = 2
     rate = 44100
     size = 1024
-    thunderfiles = ['/home/pi/father_zaps.wav']
+    thunderfiles = ['/home/pi/Madness_Vault_Whispers.wav']
     out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
     out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
     out_stream.setchannels(channels)
@@ -209,17 +209,18 @@ def PlaySound():
                     curstream = open(curfile, "rb")
                 data = curstream.read(size)
                 tstart = 0
-                gevent.sleep(0.01)
+                gevent.sleep(0.001)
                 while data and playsound == True:
                     tstart += 1
                     out_stream.write(data)
                     data = curstream.read(size)
-                    gevent.sleep(0.01)
+                    gevent.sleep(0.001)
                 try:
                     curstream.close()
                 except:
                     pass
                 curstream = None
+                playsound = False
             if playsound == False:
                 try:
                     curstream.close()
@@ -227,7 +228,7 @@ def PlaySound():
                     pass
                 curstream = None
         else:
-            gevent.sleep(0.01)
+            gevent.sleep(0.001)
 
     sys.exit(0)
 
