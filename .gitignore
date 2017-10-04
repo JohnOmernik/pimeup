@@ -1,3 +1,5 @@
 ledsound/*.wav
 base_install/Adafruit*
 hauntlogs/logs/*.log
+hauntlogs/logs/*/*
+hauntlogs/logs/*
