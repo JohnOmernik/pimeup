@@ -246,7 +246,7 @@ def normal():
         while True:
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
-                logevent("heartbeat", "Working", "Standard HB")
+                logevent("heartbeat", wiimote.state['battery'], "wii HB")
                 lasthb = curtime
             gevent.sleep(0.001)
     except KeyboardInterrupt:
