@@ -39,7 +39,7 @@ WHATAMI = os.path.basename(__file__).replace(".py", "")
 #connected = False
 #turbo = False
 #rumble = 0
-numpixels = 60 # Number of LEDs in strip
+numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
@@ -87,7 +87,9 @@ def main():
     global my_colors
     global num_colors
     global fire_colors
+
     logevent("startup", "startup", "Just started and ready to run")
+
     for x in range(len(fire_colors)):
         if x == len(fire_colors) -1:
             pass
