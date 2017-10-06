@@ -26,7 +26,7 @@ rpt_mode = 0
 wiimote = None
 connected = False
 rumble = 0
-numpixels = 60 # Number of LEDs in strip
+numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
