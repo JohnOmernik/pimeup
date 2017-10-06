@@ -9,14 +9,16 @@ import gevent
 from collections import OrderedDict
 import alsaaudio
 import wave
-import sys
+import requests
+import os
 import struct
 import math
 from dotstar import Adafruit_DotStar
 import socket
 
-
+WHATAMI = os.path.basename(__file__).replace(".py", "")
 WHOAMI = socket.gethostname()
+
 m = alsaaudio.Mixer('PCM')
 current_volume = m.getvolume() # Get the current Volume
 print("Cur Vol: %s " % current_volume)
@@ -55,7 +57,7 @@ fireplacestarttime = 0
 soundstarttime = 0
 curplay = 66
 lasthb = 0
-hbinterval = 10
+hbinterval = 30
 fireplace = True
 fireplacestart = False
 soundstart = False
@@ -80,7 +82,7 @@ def main():
     global strip
     global allcolors
     global firecolors
-
+    logevent("startup", "startup", "Just started and ready to run")
     for x in range(len(fire_colors)):
         if x == len(fire_colors) -1:
             pass
@@ -102,7 +104,6 @@ def main():
     global connected
     global rumble
 
-
     print("Trying Connection")
     print ("Press 1+2")
     while not connected:
@@ -115,7 +116,7 @@ def main():
             time.sleep(2)
             rumble ^= 1
             wiimote.rumble = rumble
-
+            logevent("wii", "connect", "Wii remote just synced up")
         except:
             print("Trying Again, please press 1+2")
             time.sleep(2)
@@ -137,6 +138,22 @@ def main():
         gevent.spawn(playSound),
     ])
 
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
+
 def normal():
     global strip
     global lasthb
@@ -150,37 +167,12 @@ def normal():
     global outtimes
     global soundplaying
     try:
-        while True:
-            gevent.sleep(0.001)
+       while True:
             curtime = int(time.time())
-            # Just not doing anything
-            #if curtime - fireplacestarttime > curplay or curtime - soundstarttime > curplay:
-            #    # Well time to reset
-            #    print("Reseting")
-            #    print(heat)
-            #    fireplacestart = True
-            #    soundstart = True
-            #    soundplaying = False
-            #    fireplacestarttime = curtime
-            #    soundstarttime = curtime
-            #    outtimes = {}
-            #    gevent.sleep(0.001)
-            #else:
-            #   if (curtime - fireplacestarttime) % 5 == 0:
-            #        if str(curtime) not in outtimes:
-            #            curheat = sum(heat) / float(len(heat))
-            #            print("Current offset: %s - Avg Heat: %s" % (curtime - fireplacestarttime, curheat))
-            #            outtimes[str(curtime)] = 1
-
             if curtime - lasthb > hbinterval:
-                curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-                outrec = OrderedDict()
-                outrec['ts'] = curts
-                outrec['battery'] = wiimote.state['battery']
-                outrec['host'] = WHOAMI
-                print(json.dumps(outrec))
-                outrec = None
+                logevent("heartbeat", "Working", "Standard HB")
                 lasthb = curtime
+            gevent.sleep(0.001)
 
     except KeyboardInterrupt:
         print("Exiting")
@@ -288,6 +280,19 @@ def FirePlace():
         sys.exit(0)
 
 
+def sendlog(log, debug):
+    logurl = "http://hauntcontrol:5050/hauntlogs"
+    try:
+        r = requests.post(logurl, json=log)
+        if debug:
+            print("Posted to %s status code %s" % (logurl, r.status_code))
+            print(json.dumps(log))
+    except:
+        if debug:
+            print("Post to %s failed timed out?" % logurl)
+            print(json.dumps(log))
+
+
 
 
 
@@ -348,13 +353,12 @@ def handle_buttons(buttons):
     global strip
     global soundstart
     global soundplaying
-    
+
     if (buttons & cwiid.BTN_A):
         print("soundplaying in A: %s" % soundplaying)
         if soundplaying == False:
-            print("making soundstart true")
             soundstart = True
-
+            logevent("index_change", "reset", "Reset the index to start loop again")
     gevent.sleep(0.001)
 
 

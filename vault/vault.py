@@ -26,11 +26,11 @@ rpt_mode = 0
 wiimote = None
 connected = False
 rumble = 0
-numpixels = 60 # Number of LEDs in strip
+numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
-defaultColor = 0xF0F0FF
+defaultColor = 0xFFFFCC
 defaultBright = 255
 # Here's how to control the strip from any two GPIO pins:
 datapin   = 23
@@ -45,14 +45,14 @@ playsound = False
 normallight = True
 goldlight = False
 
-fire_colors = [ "#F0F0FF", "#66CC00"]
+fire_colors = [ "#CCCCCC", "#33CC00", "#66CC00"]
 # "#FFFF00"]
 num_colors = 100
 my_colors = []
 colors_dict = OrderedDict()
 allcolors = []
 pulse_colors = []
-pulse_mod = 8
+pulse_mod = 4
 
 eventarray = []
 eventarray.append({"playsound": False, "normallight": True, "goldlight": False})
@@ -78,6 +78,7 @@ eventidx = 0
 def main():
 
     #Connect to address given on command-line, if present
+    logevent("startup", "startup", "Just started and ready to run")
     print 'Put Wiimote in discoverable mode now (press 1+2)...'
     global wiimote
     global rpt_mode
@@ -123,6 +124,7 @@ def main():
             time.sleep(2)
             rumble ^= 1
             wiimote.rumble = rumble
+            logevent("wii", "connect", "Wii remote just synced up")
         except:
             print("Trying Again, please press 1+2")
             time.sleep(2)
@@ -142,6 +144,22 @@ def main():
         gevent.spawn(Lights),
         gevent.spawn(PlaySound),
     ])
+
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
 
 def Lights():
     global strip
@@ -255,21 +273,11 @@ def normal():
     global hbinterval
     try:
         while True:
-            gevent.sleep(0.01)
             curtime = int(time.time())
             if curtime - lasthb > hbinterval:
-                curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-                outrec = OrderedDict()
-                outrec['ts'] = curts
-                outrec['host'] = WHOAMI
-                outrec['script'] = WHATAMI
-                outrec['event_type'] = "battery"
-                outrec['event_data'] = wiimote.state['battery']
-                outrec['event_desc'] = "Wii remote battery status update"
-                sendlog(outrec, False)
-                outrec = None
+                logevent("heartbeat", "Working", "Standard HB")
                 lasthb = curtime
-
+            gevent.sleep(0.001)
     except KeyboardInterrupt:
         print("Exiting")
         setAllLEDS(strip, [0x000000])
@@ -301,19 +309,7 @@ def handle_buttons(buttons):
         goldlight = eventarray[eventidx]["goldlight"]
         normallight = eventarray[eventidx]["normallight"]
         playsound = eventarray[eventidx]["playsound"]
-
-        curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-        outrec = OrderedDict()
-        outrec['ts'] = curts
-        outrec['host'] = WHOAMI
-        outrec['script'] = WHATAMI
-        outrec['event_type'] = "index_change"
-        outrec['event_data'] = eventarray[eventidx]
-        outrec['event_desc'] = "Event list index changed from %s to %s" % (previdx, eventidx)
-        sendlog(outrec, False)
-        outrec = None
-
-
+        logevent("index_change", eventarray[eventidx], "Event list index changed from %s to %s" % (previdx, eventidx))
 
 
 def rms(frame):
