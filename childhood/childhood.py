@@ -1,14 +1,23 @@
 #!/usr/bin/python
-#Gateway
 import time
 import random
 import sys
 import alsaaudio
 import wave
-import sys
 import struct
 import math
-from dotstar import Adafruit_DotStar
+import json
+import requests
+import os
+import socket
+import gevent
+from collections import OrderedDict
+#from dotstar import Adafruit_DotStar
+
+
+
+WHOAMI = socket.gethostname()
+WHATAMI = os.path.basename(__file__).replace(".py", "")
 
 #m = alsaaudio.Mixer('PCM')
 #current_volume = m.getvolume() # Get the current Volume
@@ -17,88 +26,92 @@ from dotstar import Adafruit_DotStar
 #current_volume = m.getvolume() # Get the current Volume
 #print("Cur Vol: %s " % current_volume)
 
+hbinterval = 30
+lasthb = 0
 
 
-numpixels = 60 # Number of LEDs in strip
-# Here's how to control the strip from any two GPIO pins:
-datapin   = 23
-clockpin  = 24
-
-colors = [  0x0000FF, 0xFF0000,  0x00FFFF, 0x000000]
-
-curcolor = random.choice(colors)
-colortimer = -1
-defaultBright = 255
-
-strip = Adafruit_DotStar(numpixels, datapin, clockpin)
-strip.setBrightness(defaultBright)
-strip.begin()           # Initialize pins for output
-
-hi_thres = 100
-
-beat = False
 def main():
-    global strip
-    global curcolor
-    global colortimer
+    logevent("startup", "startup", "Just started and ready to run")
+
+    gevent.joinall([
+        gevent.spawn(normal),
+        gevent.spawn(PlaySound),
+    ])
+
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
+
+def sendlog(log, debug):
+    logurl = "http://hauntcontrol:5050/hauntlogs"
+    try:
+        r = requests.post(logurl, json=log)
+        if debug:
+            print("Posted to %s status code %s" % (logurl, r.status_code))
+            print(json.dumps(log))
+    except:
+        if debug:
+            print("Post to %s failed timed out?" % logurl)
+            print(json.dumps(log))
+
+
+
+def normal():
+    global lasthb
+    global hbinterval
+    try:
+        while True:
+            curtime = int(time.time())
+            if curtime - lasthb > hbinterval:
+                logevent("heartbeat", "Working", "Standard HB")
+                lasthb = curtime
+            gevent.sleep(0.001)
+    except KeyboardInterrupt:
+        print("Exiting")
+    sys.exit()
+
+def PlaySound():
     sounds = [0, 0, 0]
-    playsound = False
 
-    if playsound == True:
-        channels = 2
-        rate = 44100
-        size = 1024
-        out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
-        out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-        out_stream.setchannels(channels)
-        out_stream.setrate(rate)
-        out_stream.setperiodsize(size)
 
-    strip.setBrightness(defaultBright)
-    setAllLEDS(strip, [curcolor])
-    strip.show()
+    channels = 2
+    rate = 44100
+    size = 1024
+    out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
+    out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+    out_stream.setchannels(channels)
+    out_stream.setrate(rate)
+    out_stream.setperiodsize(size)
 
-    soundfiles = ['/home/pi/heartbeat.wav']
+  #  strip.setBrightness(defaultBright)
+  #  setAllLEDS(strip, [defaultColor])
+  #  strip.show()
+
+    thunderfiles = ['/home/pi/spencer_young.wav', '/home/pi/spencer2.wav', '/home/pi/spencer3.wav']
 
     while True:
-        if playsound == True:
-            curfile = random.choice(soundfiles)
-            curstream = open(curfile, "rb")
+        curfile = random.choice(thunderfiles)
+        curstream = open(curfile, "rb")
+        data = curstream.read(size)
+        tstart = 0
+        while data:
+            tstart += 1
+            out_stream.write(data)
             data = curstream.read(size)
-            tstart = 0
-            while data:
-                tstart += 1
-                out_stream.write(data)
-                data = curstream.read(size)
-                rmsval = rms(data)
-                sounds.append(rmsval)
-                ug = sounds.pop(0)
-                try:
-                    sounds_avg = sum(sounds) / len(sounds)
-                except:
-                    sounds_avg = 0
-
-                if sounds_avg > hi_thres:
-                    newcolor = curcolor
-                    while newcolor == curcolor:
-                        newcolor = random.choice(colors)
-                    setAllLEDS(strip, [newcolor])
-                    curcolor = newcolor
-            curstream.close()
-        else:
-            newcolor = curcolor
-            while newcolor == curcolor:
-                newcolor = random.choice(colors)
-            setAllLEDS(strip, [newcolor])
-            curcolor = newcolor
-
-            if colortimer == -1:
-                mysleep = random.randint(2, 10)
-            else:
-                mysleep = colortimer
-
-#            print("Sleeping for %s" % mysleep)
-            time.sleep(mysleep)
+        curstream.close()
+	gevent.sleep(0.001)
 
     sys.exit(0)
 
