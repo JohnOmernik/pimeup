@@ -14,7 +14,7 @@ from collections import OrderedDict
 
 WHOAMI = socket.gethostname()
 WHATAMI_BASE = os.path.basename(__file__).replace(".py", "")
-WHATAMI = WHATAMI_BASE + " - " WHOAMI
+WHATAMI = WHATAMI_BASE + " - " + WHOAMI
 bsurl = "http://HAUNTCONTROL:5050/bootstrap/" + WHOAMI
 
 gitpull = "/home/pi/pimeup/bspimeup/gitpull.sh"
@@ -52,46 +52,53 @@ def main():
         initialgit = True
     while True:
         curtime = int(time.time())
-        if cutime - lastchktime >= chktime:
+        if curtime - lastchktime >= chktime:
             if myroom != "init":
                 # Get Wii remote update
-            logevent("heartbeat", myroom, "Heartbeat and conf check for %s" % myroom)
+                logevent("heartbeat", myroom, "Heartbeat and conf check for %s" % myroom)
             # Get current config
             resp = requests.get(bsurl)
-            curconf = resp.json
+            try:
+                curconf = json.loads(resp.text)
+                print(curconf)
+            except:
+                curconf = None
+            if curconf != None:
             # See if we need to update how often we check
-            if chktime != curconf['chktime']:
-                logevent("update_chktime", myroom, "Updating checktime from %s to %s" % (chktime, curconf['chktime'])
-                chktime = curconf['chktime']
+                if chktime != curconf['chktime']:
+                    logevent("update_chktime", myroom, "Updating checktime from %s to %s" % (chktime, curconf['chktime']))
+                    chktime = curconf['chktime']
             # Is our room not set, or did our room change
-            if myroom != curcon['myroom']:
-                myroom = curcon['myroom']
-                WHATAMI = WHATAMI_BASE + " - " + myroom
-                logevent("roomset", myroom, "setting room to %s" % myroom)
-                myscript = "/home/pi/pimeup/%s/%s.py" % (myroom, myroom)
+                if myroom != curconf['room']:
+                    myroom = curconf['room']
+                    WHATAMI = WHATAMI_BASE + " - " + myroom
+                    logevent("roomset", myroom, "setting room to %s" % myroom)
+                    myscript = "/home/pi/pimeup/%s/%s.py" % (myroom, myroom)
             # Are we currently running
-            if running == False:
+                if running == False:
                 # Should we be running?
-                if curconf['run'] == 1:
-                    roomprocess = subprocess.Popen(['python', myscript])
-                    logevent("roomstart", myroom, "Starting room %s" % myroom)
-            else:
+                    if curconf['run'] == 1:
+                        print("Running: %s" % myscript)
+                        roomprocess = subprocess.Popen(['python', myscript])
+                        logevent("roomstart", myroom, "Starting room %s" % myroom)
+                        running = True
+                else:
                 # If we are running and our process is exited, let's fix that
-                curstatus = subprocess.Popen.poll(roomprocess)
-                if curstatus != None:
+                    curstatus = subprocess.Popen.poll(roomprocess)
+                    if curstatus != None:
                 # The process has exited, let's restart it by setting the loop to be False
-                    logevent("roomfail", myroom, "Room %s was supposed to be running but is not gonna try again")
-                    running = False
-                    lastchktime = 0
+                        logevent("roomfail", myroom, "Room %s was supposed to be running but is not gonna try again")
+                        running = False
+                        lastchktime = 0
                 # At this point is the config asking us to be stopped?
-                if curconf['run'] != 1:
-                    logevent("roomstop", myroom, "Room %s is now stopping")
-                    subprocess.Popen.terminate(roomprocess)
-                    running = False
+                    if curconf['run'] != 1:
+                        logevent("roomstop", myroom, "Room %s is now stopping")
+                        subprocess.Popen.terminate(roomprocess)
+                        running = False
 
             # Update the last check time
-            lastchktime = curtime
-            time.sleep(5)
+                lastchktime = curtime
+                time.sleep(5)
 
 def logevent(etype, edata, edesc):
     global WHOAMI

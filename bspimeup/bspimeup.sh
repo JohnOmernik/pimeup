@@ -7,7 +7,7 @@
 # Default-Stop:
 # Short-Description: Pimeup bootstrap
 ### END INIT INFO
-script="/home/pi/pimeup/gateway/gateway.py"
+script="/home/pi/pimeup/bepimeup/bspimeup.py"
 /usr/bin/python $script &
 
 
