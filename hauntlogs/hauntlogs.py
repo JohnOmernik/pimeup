@@ -11,11 +11,11 @@ WHOAMI = socket.gethostname()
 WHATAMI = os.path.basename(__file__).replace(".py", "")
 
 BSCONFIG = {}
-bsreload = 60
+bsreload = 120
 chktime = 60
 bslastreload = 0
-bsfile = "/home/zetaadm/pimeup/hauntlogs/bootstrap.ini"
-hauntini = "/home/zetaadm/pimeup/hauntlogs/haunt.ini"
+bsfile = "/home/pi/pimeup/hauntlogs/bootstrap.ini"
+hauntini = "/home/pi/pimeup/hauntlogs/haunt.ini"
 
 app = Flask(__name__)
 
@@ -23,7 +23,14 @@ app = Flask(__name__)
 def hauntlogs():
     loadbs()
     global BSCONFIG
-    logdir = "/home/pi/pimeup/hauntlogs/logs"
+    curtime = int(time.time())
+    curday = time.strftime('%Y-%m-%d', time.localtime(curtime))
+
+    logdir = "/home/pi/pimeup/hauntlogs/logs/" + curday
+
+    if not os.path.exists(logdir):
+        os.makedirs(logdir)
+
     if not request.json:
         abort(400)
     mylog = request.json
@@ -32,6 +39,7 @@ def hauntlogs():
         myhost = "unknown"
     else:
         myhost = mylog['host']
+
 
     logfile = logdir + "/" + myhost + ".log"
     f = open(logfile, "a")
@@ -92,4 +100,4 @@ def logevent(etype, edata, edesc):
     outrec = None
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5050, debug=False)
+    app.run(host="0.0.0.0", port=5050, debug=True)
