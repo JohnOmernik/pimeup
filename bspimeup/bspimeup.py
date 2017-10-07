@@ -57,8 +57,8 @@ def main():
                 # Get Wii remote update
                 logevent("heartbeat", myroom, "Heartbeat and conf check for %s" % myroom)
             # Get current config
-            resp = requests.get(bsurl)
             try:
+                resp = requests.get(bsurl)
                 curconf = json.loads(resp.text)
                 print(curconf)
             except:
