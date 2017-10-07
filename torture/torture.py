@@ -14,12 +14,12 @@ from dotstar import Adafruit_DotStar
 import socket
 import alsaaudio
 
-m = alsaaudio.Mixer('PCM')
-current_volume = m.getvolume() # Get the current Volume#
-print("Cur Vol: %s " % current_volume)
-m.setvolume(100) # Set the volume to 70%.
-current_volume = m.getvolume() # Get the current Volume
-print("New Cur Vol: %s " % current_volume)
+#m = alsaaudio.Mixer('PCM')
+#current_volume = m.getvolume() # Get the current Volume#
+#print("Cur Vol: %s " % current_volume)
+#m.setvolume(100) # Set the volume to 70%.
+#current_volume = m.getvolume() # Get the current Volume
+#print("New Cur Vol: %s " % current_volume)
 
 WHOAMI = socket.gethostname()
 WHATAMI = os.path.basename(__file__).replace(".py", "")

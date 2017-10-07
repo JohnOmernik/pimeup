@@ -18,11 +18,11 @@ from dotstar import Adafruit_DotStar
 WHOAMI = socket.gethostname()
 WHATAMI = os.path.basename(__file__).replace(".py", "")
 
-m = alsaaudio.Mixer('PCM')
-current_volume = m.getvolume() # Get the current Volume
-print("Cur Vol: %s " % current_volume)
-m.setvolume(100) # Set the volume to 70%.
-current_volume = m.getvolume() # Get the current Volume
+#m = alsaaudio.Mixer('PCM')
+#current_volume = m.getvolume() # Get the current Volume
+#print("Cur Vol: %s " % current_volume)
+#m.setvolume(100) # Set the volume to 70%.
+#current_volume = m.getvolume() # Get the current Volume
 #print("Cur Vol: %s " % current_volume)
 
 numpixels = 120 # Number of LEDs in strip
