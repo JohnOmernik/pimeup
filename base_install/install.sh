@@ -2,9 +2,11 @@
 
 sudo apt-get update && sudo apt-get upgrade -y
 
-sudo apt-get install -y python-dev ntp rfkill build-essential python3 python3-pip libcwiid1 python3-dev python-smbus python-alsaaudio python-cwiid python-gevent python-requests
+sudo apt-get install -y python-dev ntp python-pip rfkill build-essential python3 python3-pip libcwiid1 python3-dev python-smbus python-alsaaudio python-cwiid python-gevent python-requests
 
-sudo pip3 install wtforms rpi.gpio && pip install rpi.gpio wtforms
+sudo pip3 install wtforms rpi.gpio
+
+sudo pip install wtforms rpi.gpio 
 
 sudo sed -i "/pool 3/a server 192.168.35.1 iburst" /etc/ntp.conf && sudo /etc/init.d/ntp restart
 
