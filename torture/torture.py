@@ -89,9 +89,9 @@ def main():
         for y in colors_dict[x]:
             allcolors.append(y)
 
+#        gevent.spawn(PlaySound),
 
     gevent.joinall([
-        gevent.spawn(PlaySound),
         gevent.spawn(FirePlace),
     ])
 
