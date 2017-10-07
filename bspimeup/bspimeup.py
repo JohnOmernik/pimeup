@@ -39,7 +39,8 @@ def main():
     global WHATAMI_BASE
     global WHOAMI
 
-
+    curconf = None
+    oldconf = None
     # First check if we need to git pull
     if initialgit == False:
         gitproc = subprocess.Popen([gitpull])
@@ -57,12 +58,13 @@ def main():
                 # Get Wii remote update
                 logevent("heartbeat", myroom, "Heartbeat and conf check for %s" % myroom)
             # Get current config
+            oldconf = curconf
             try:
                 resp = requests.get(bsurl)
                 curconf = json.loads(resp.text)
                 print(curconf)
             except:
-                curconf = None
+                curconf = oldconf
             if curconf != None:
             # See if we need to update how often we check
                 if chktime != curconf['chktime']:
