@@ -4,7 +4,6 @@ import random
 import sys
 import alsaaudio
 import wave
-import gevent
 import struct
 import json
 import socket
@@ -46,16 +45,55 @@ beat = False
 def main():
     global strip
     global beat
+    global lasthb
+    global hbinterval
 
     logevent("startup", "startup", "Just started and ready to run")
 
     strip.setBrightness(defaultBright)
     setAllLEDS(strip, [defaultColor])
     strip.show()
-    gevent.joinall([
-        gevent.spawn(PlaySound),
-        gevent.spawn(normal),
-    ])
+
+    sounds = [0, 0, 0]
+
+    channels = 2
+    rate = 44100
+    size = 1024
+    out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
+    out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+    out_stream.setchannels(channels)
+    out_stream.setrate(rate)
+    out_stream.setperiodsize(size)
+
+    soundfiles = ['/home/pi/heartbeat.wav']
+    while True:
+        curtime = int(time.time())
+        if curtime - lasthb > hbinterval:
+            logevent("heartbeat", "Working", "Standard HB")
+            lasthb = curtime
+
+        curfile = random.choice(soundfiles)
+        curstream = open(curfile, "rb")
+        data = curstream.read(size)
+        while data:
+            out_stream.write(data)
+            data = curstream.read(size)
+            rmsval = rms(data)
+            sounds.append(rmsval)
+            ug = sounds.pop(0)
+            try:
+                sounds_avg = sum(sounds) / len(sounds)
+            except:
+                sounds_avg = 0
+            if sounds_avg > hi_thres and beat == False:
+                strip.setBrightness(flashBright)
+                setAllLEDS(strip, [flashColor])
+                beat = True
+            if sounds_avg < low_thres and beat == True:
+                strip.setBrightness(defaultBright)
+                setAllLEDS(strip, [defaultColor])
+                beat = False
+        curstream.close()
 
 
 
@@ -74,72 +112,6 @@ def logevent(etype, edata, edesc):
     outrec['event_desc'] = edesc
     sendlog(outrec, False)
     outrec = None
-
-
-def PlaySound():
-    global strip
-    global beat
-    sounds = [0, 0, 0]
-
-    channels = 2
-    rate = 44100
-    size = 1024
-    out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
-    out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-    out_stream.setchannels(channels)
-    out_stream.setrate(rate)
-    out_stream.setperiodsize(size)
-
-    thunderfiles = ['/home/pi/heartbeat.wav']
-    while True:
-        curfile = random.choice(thunderfiles)
-        curstream = open(curfile, "rb")
-        data = curstream.read(size)
-        tstart = 0
-        while data:
-            tstart += 1
-            out_stream.write(data)
-            data = curstream.read(size)
-            rmsval = rms(data)
-            sounds.append(rmsval)
-            ug = sounds.pop(0)
-            try:
-                sounds_avg = sum(sounds) / len(sounds)
-            except:
-                sounds_avg = 0
-            if sounds_avg > hi_thres and beat == False:
-                strip.setBrightness(flashBright)
-                setAllLEDS(strip, [flashColor])
-                beat = True
-            if sounds_avg < low_thres and beat == True:
-                strip.setBrightness(defaultBright)
-                setAllLEDS(strip, [defaultColor])
-                beat = False
-            gevent.sleep(0.001)
-        curstream.close()
-
-    sys.exit(0)
-
-def normal():
-    global strip
-    global lasthb
-    global hbinterval
-    try:
-        while True:
-            curtime = int(time.time())
-            if curtime - lasthb > hbinterval:
-                logevent("heartbeat", "Working", "Standard HB")
-                lasthb = curtime
-            gevent.sleep(0.001)
-    except KeyboardInterrupt:
-        print("Exiting")
-        setAllLEDS(strip, [0x000000])
-        strip.setBrightness(0)
-        strip.show()
-    wiimote.close()
-    sys.exit()
-
-
 
 def setAllLEDS(strip, colorlist):
     for x in range(numpixels):

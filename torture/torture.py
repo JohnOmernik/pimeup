@@ -7,6 +7,7 @@ import json
 import os
 import requests
 import datetime
+import gevent
 import atexit
 from collections import OrderedDict
 import random
@@ -25,20 +26,6 @@ WHOAMI = socket.gethostname()
 WHATAMI = os.path.basename(__file__).replace(".py", "")
 
 
-#import RPi.GPIO as GPIO
-#GPIO Mode (BOARD / BCM)
-#GPIO.setmode(GPIO.BCM)
- #set GPIO Pins
-#GPIO_RELAY = 16
-#set GPIO direction (IN / OUT)
-#GPIO.setup(GPIO_RELAY, GPIO.OUT)
-
-#mesg = False
-#rpt_mode = 0
-#wiimote = None
-#connected = False
-#turbo = False
-#rumble = 0
 numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
@@ -100,50 +87,12 @@ def main():
             colors_dict[fire_colors[x] + "_2_" + fire_colors[x+1]] = gtmp['hex']
     for x in colors_dict:
         for y in colors_dict[x]:
-      #  print("Color: %s" % hex_to_RGB(y))
             allcolors.append(y)
 
-    #Connect to address given on command-line, if present
-#    print 'Put Wiimote in discoverable mode now (press 1+2)...'
-   # global wiimote
-   # global rpt_mode
-   # global connected
-   # global strip
-   # global rumble
-
-
-#    print("Trying Connection")
-#    print ("Press 1+2")
-#    while not connected:
-#        try:
-#            wiimote = cwiid.Wiimote()
-#            print("Connected!")
-#            connected = True
-#            rumble ^= 1
-#            wiimote.rumble = rumble
-#            time.sleep(2)
-#            rumble ^= 1
-#            wiimote.rumble = rumble
-#        except:
-#            print("Trying Again, please press 1+2")
-#            time.sleep(2)
-
-
- #   wiimote.mesg_callback = callback
-
-  #  print("For LED we enable Button")
-  #  rpt_mode ^= cwiid.RPT_BTN
-
-    # Enable the messages in callback
-   # wiimote.enable(cwiid.FLAG_MESG_IFC);
-   # wiimote.rpt_mode = rpt_mode
-
-#    print(wiimote.state)
 
     gevent.joinall([
         gevent.spawn(PlaySound),
         gevent.spawn(FirePlace),
-        gevent.spawn(normal),
     ])
 
 
@@ -163,28 +112,11 @@ def logevent(etype, edata, edesc):
     sendlog(outrec, False)
     outrec = None
 
-def normal():
-    global strip
-    global wiimote
-    global lasthb
-    global hbinterval
-    try:
-        while True:
-            curtime = int(time.time())
-            if curtime - lasthb > hbinterval:
-                logevent("heartbeat", "Working", "Standard HB")
-                lasthb = curtime
-            gevent.sleep(0.001)
-    except KeyboardInterrupt:
-        print("Exiting")
-        setAllLEDS(strip, [0x000000])
-        strip.setBrightness(0)
-        strip.show()
-    wiimote.close()
-    sys.exit()
-
 
 def PlaySound():
+    global lasthb
+    global hbinterval
+
     channels = 2
     rate = 44100
     size = 1024
@@ -193,11 +125,13 @@ def PlaySound():
     out_stream.setchannels(channels)
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
-    print("In Play sound")
     soundfiles = ['/home/pi/torture_audio.wav']
     curstream = None
     while True:
-        print("Opening File")
+        curtime = int(time.time())
+        if curtime - lasthb > hbinterval:
+            logevent("heartbeat", "Working", "Standard HB")
+            lasthb = curtime
         curfile = random.choice(soundfiles)
         curstream = open(curfile, "rb")
         gevent.sleep(0.01)
@@ -208,8 +142,6 @@ def PlaySound():
                 data = curstream.read(size)
                 gevent.sleep(0.001)
             curstream.close()
-            print("Looping Sound")
-
 
 
 def sendlog(log, debug):
@@ -283,20 +215,6 @@ def FirePlace():
 
 
 
-def handle_buttons(buttons):
-    global heat
-    global strip
-    global fireplace
-    if (buttons & cwiid.BTN_A):
-        print("Squirting")
-        GPIO.output(GPIO_RELAY, True)
-    else:
-        GPIO.output(GPIO_RELAY, False)
-
-
-
-
-
 #BTN_1', 'BTN_2', 'BTN_A', 'BTN_B', 'BTN_DOWN', 'BTN_HOME', 'BTN_LEFT', 'BTN_MINUS', 'BTN_PLUS', 'BTN_RIGHT', 'BTN_UP',
 
 def color_dict(gradient):
@@ -345,18 +263,6 @@ def RGB_to_hex(RGB):
     return "#"+"".join(["0{0:x}".format(v) if v < 16 else
             "{0:x}".format(v) for v in RGB])
 
-
-
-def callback(mesg_list, time):
-
-
-    for mesg in mesg_list:
-        if mesg[0] == cwiid.MESG_BTN:
-            handle_buttons(mesg[1])
-#            print("Time: %s" % time)
- #           print 'Button Report: %.4X' % mesg[1]
-        else:
-            print 'Unknown Report'
 
 def setAllLEDS(strip, colorlist):
     numcolors = len(colorlist)

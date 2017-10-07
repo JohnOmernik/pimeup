@@ -4,7 +4,6 @@ import random
 import sys
 import alsaaudio
 import wave
-import gevent
 import struct
 import json
 import socket
@@ -46,39 +45,14 @@ beat = False
 def main():
     global strip
     global beat
+    global lasthb
+    global hbinterval
 
     logevent("startup", "startup", "Just started and ready to run")
 
     strip.setBrightness(defaultBright)
     setAllLEDS(strip, [defaultColor])
     strip.show()
-    gevent.joinall([
-        gevent.spawn(PlaySound),
-        gevent.spawn(normal),
-    ])
-
-
-
-def logevent(etype, edata, edesc):
-    global WHOAMI
-    global WHATAMI
-
-    curtime = int(time.time())
-    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
-    outrec = OrderedDict()
-    outrec['ts'] = curts
-    outrec['host'] = WHOAMI
-    outrec['script'] = WHATAMI
-    outrec['event_type'] = etype
-    outrec['event_data'] = edata
-    outrec['event_desc'] = edesc
-    sendlog(outrec, False)
-    outrec = None
-
-
-def PlaySound():
-    global strip
-    global beat
     sounds = [0, 0, 0]
 
     channels = 2
@@ -90,15 +64,18 @@ def PlaySound():
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
 
-    thunderfiles = ['/home/pi/haunt_electric1.wav']
+    soundfiles = ['/home/pi/haunt_electric1.wav']
 
     while True:
-        curfile = random.choice(thunderfiles)
+        curtime = int(time.time())
+        if curtime - lasthb > hbinterval:
+            logevent("heartbeat", "Working", "Standard HB")
+            lasthb = curtime
+
+        curfile = random.choice(soundfiles)
         curstream = open(curfile, "rb")
         data = curstream.read(size)
-        tstart = 0
         while data:
-            tstart += 1
             out_stream.write(data)
             data = curstream.read(size)
             rmsval = rms(data)
@@ -116,30 +93,26 @@ def PlaySound():
                 strip.setBrightness(defaultBright)
                 setAllLEDS(strip, [defaultColor])
                 beat = False
-            gevent.sleep(0.001)
         curstream.close()
 
     sys.exit(0)
 
-def normal():
-    global strip
-    global lasthb
-    global hbinterval
-    try:
-        while True:
-            curtime = int(time.time())
-            if curtime - lasthb > hbinterval:
-                logevent("heartbeat", "Working", "Standard HB")
-                lasthb = curtime
-            gevent.sleep(0.001)
-    except KeyboardInterrupt:
-        print("Exiting")
-        setAllLEDS(strip, [0x000000])
-        strip.setBrightness(0)
-        strip.show()
-    wiimote.close()
-    sys.exit()
 
+def logevent(etype, edata, edesc):
+    global WHOAMI
+    global WHATAMI
+
+    curtime = int(time.time())
+    curts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(curtime))
+    outrec = OrderedDict()
+    outrec['ts'] = curts
+    outrec['host'] = WHOAMI
+    outrec['script'] = WHATAMI
+    outrec['event_type'] = etype
+    outrec['event_data'] = edata
+    outrec['event_desc'] = edesc
+    sendlog(outrec, False)
+    outrec = None
 
 
 def setAllLEDS(strip, colorlist):
