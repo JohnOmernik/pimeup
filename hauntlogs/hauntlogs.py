@@ -58,6 +58,17 @@ def bootstrap(node):
         outjson['chktime'] = chktime
     return jsonify(outjson), 200
 
+def sendlog(log, debug):
+    logurl = "http://hauntcontrol:5050/hauntlogs"
+    try:
+        r = requests.post(logurl, json=log)
+        if debug:
+            print("Posted to %s status code %s" % (logurl, r.status_code))
+            print(json.dumps(log))
+    except:
+        if debug:
+            print("Post to %s failed timed out?" % logurl)
+            print(json.dumps(log))
 
 def loadbs():
     global BSCONFIG
@@ -95,8 +106,8 @@ def logevent(etype, edata, edesc):
     outrec['event_type'] = etype
     outrec['event_data'] = edata
     outrec['event_desc'] = edesc
-    print(outrec)
-#    sendlog(outrec, False)
+#    print(outrec)
+    sendlog(outrec, False)
     outrec = None
 
 if __name__ == '__main__':
