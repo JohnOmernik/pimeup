@@ -101,6 +101,13 @@ def main():
                         subprocess.Popen.terminate(roomprocess)
                         running = False
                     shutdown()
+                if curconf['fsck'] == 1:
+                    if running == True:
+                        # Let's stop our room before the shutdown
+                        logevent("roomstop", myroom, "Room %s is now stopping")
+                        subprocess.Popen.terminate(roomprocess)
+                        running = False
+                    fsckreboot()
             # Are we currently running
                 if running == False:
                 # Should we be running?
@@ -127,6 +134,9 @@ def main():
                 lastchktime = curtime
                 time.sleep(5)
 
+def fsckreboot():
+    logevent("shutdown", "fsckreboot", "Shutting down with -rF (halt and run fsck) being issued now")
+    runcmd(['sudo', 'shutdown', '-rF', 'now'])
 
 
 def shutdown():
