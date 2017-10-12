@@ -11,20 +11,15 @@ pwm = Adafruit_PCA9685.PCA9685(0x40)
 pwm.set_pwm_freq(60)
 
 SRV_OPTIONS = []
-SRV_OPTIONS.append({"SRV": 0, "DESC":"Jaw Movement", "RANGE_MIN": 300, "RANGE_MAX": 500})
-SRV_OPTIONS.append({"SRV": 1, "DESC":"Eye Movement", "RANGE_MIN": 400, "RANGE_MAX": 600})
-SRV_OPTIONS.append({"SRV": 2, "DESC":"Eye Blink", "RANGE_MIN": 300, "RANGE_MAX": 500})
-SRV_OPTIONS.append({"SRV": 3, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 4, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 5, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600})
-SRV_OPTIONS.append({"SRV": 6, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550})
-SRV_OPTIONS.append({"SRV": 7, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575})
 
-
-
-
-
-
+SRV_OPTIONS.append({"SRV": 0, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575})
+SRV_OPTIONS.append({"SRV": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575})
+SRV_OPTIONS.append({"SRV": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575})
+SRV_OPTIONS.append({"SRV": 3, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550})
+SRV_OPTIONS.append({"SRV": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575})
+SRV_OPTIONS.append({"SRV": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600})
+SRV_OPTIONS.append({"SRV": 6, "DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660})
+SRV_OPTIONS.append({"SRV": 7, "DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620})
 
 def main():
 
@@ -79,14 +74,6 @@ def main():
                         continue
                     pwm.set_pwm(cur_finger, 0, myval)
         
-# Beak - 300 to 500
-# Channel 0
-# Eye Turns - 400 - 600
-# Channel 1
-# Eye Blink
-# Channel 2 300-500
-                     
-
 
 
 
@@ -97,7 +84,6 @@ def main():
     pwm.set_pwm(4, 4096, 0)
     pwm.set_pwm(5, 4096, 0)
     pwm.set_pwm(6, 4096, 0)
-    pwm.set_pwm(7, 4096, 0)
     sys.exit(0)
 
 
