@@ -136,6 +136,7 @@ def main():
 
 def fsckreboot():
     logevent("shutdown", "fsckreboot", "Shutting down with -rF (halt and run fsck) being issued now")
+    runcmd(['sudo', 'touch', '/forcefsck'])
     runcmd(['sudo', 'shutdown', '-rF', 'now'])
 
 
