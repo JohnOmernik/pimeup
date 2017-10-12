@@ -17,18 +17,19 @@ WHATAMI_BASE = os.path.basename(__file__).replace(".py", "")
 WHATAMI = WHATAMI_BASE + " - " + WHOAMI
 bsurl = "http://HAUNTCONTROL:5050/bootstrap/" + WHOAMI
 
+
 gitpull = "/home/pi/pimeup/bspimeup/gitpull.sh"
 
+btstatus = -1
 myroom = "init"
 myscript = ""
 running = False
 chktime = 60
 lastchktime = 0
 roomprocess = None
-initialgit = False
 def main():
+    global btstatus
     global gitpull
-    global initialgit
     global chktime
     global myroom
     global myscript
@@ -41,22 +42,14 @@ def main():
 
     curconf = None
     oldconf = None
-    # First check if we need to git pull
-    if initialgit == False:
-        gitproc = subprocess.Popen([gitpull])
-        gitstatus = subprocess.Popen.poll(gitproc) 
-        while gitstatus is None:
-            print("Running git")
-            time.sleep(2)
-            gitstatus = subprocess.Popen.poll(gitproc)
-        logevent("initialgit", gitstatus, "The initial git returned %s" % gitstatus)
-        initialgit = True
+    # First run git pull
+    runcmd([gitpull])
     while True:
         curtime = int(time.time())
         if curtime - lastchktime >= chktime:
             if myroom != "init":
                 # Get Wii remote update
-                logevent("heartbeat", myroom, "Heartbeat and conf check for %s" % myroom)
+                logevent("bspimeup", myroom, "Heartbeat and conf check for %s" % myroom)
             # Get current config
             oldconf = curconf
             try:
@@ -64,8 +57,20 @@ def main():
                 curconf = json.loads(resp.text)
                 print(curconf)
             except:
+                logevent("bspimeup", myroom, "Failed to get pimeup config")
                 curconf = oldconf
+
+            # Now that we have the config, we are going to check all the various things to update            
             if curconf != None:
+            # Example Record: "VADERPI3": {"room": "vault", "gitpull": 0, "reboot": 0, "shutdown": 0, "run": 1, "btstatus": 1, "chktime": 60},
+            # See if we need to update the Bluetooth status
+                try:
+                    newbt = curconf['btstatus']
+                except:
+                    newbt = -1
+                if newbt != btstatus:
+                    updatebt(newbt)
+                    btstatus = newbt                    
             # See if we need to update how often we check
                 if chktime != curconf['chktime']:
                     logevent("update_chktime", myroom, "Updating checktime from %s to %s" % (chktime, curconf['chktime']))
@@ -76,6 +81,24 @@ def main():
                     WHATAMI = WHATAMI_BASE + " - " + myroom
                     logevent("roomset", myroom, "setting room to %s" % myroom)
                     myscript = "/home/pi/pimeup/%s/%s.py" % (myroom, myroom)
+            # Do you want me to update code from Git
+                if curconf['gitpull'] == 1:
+                    runcmd([gitpull])
+            # Do you want to reboot?
+                if curconf['reboot'] == 1:
+                    if running == True:
+                        # Let's stop our room before the reboot
+                        logevent("roomstop", myroom, "Room %s is now stopping")
+                        subprocess.Popen.terminate(roomprocess)
+                        running = False
+                    reboot()
+                if curconf['shutdown'] == 1:
+                    if running == True:
+                        # Let's stop our room before the shutdown
+                        logevent("roomstop", myroom, "Room %s is now stopping")
+                        subprocess.Popen.terminate(roomprocess)
+                        running = False
+                    shutdown()
             # Are we currently running
                 if running == False:
                 # Should we be running?
@@ -101,6 +124,41 @@ def main():
             # Update the last check time
                 lastchktime = curtime
                 time.sleep(5)
+
+
+
+def shutdown():
+    # Logging now because the run command won't actually return
+    logevent("shutdown", "halt", "Shutting down with -h (halt) being issued now")
+    runcmd(['sudo', 'shutdown', '-h', 'now'])
+
+
+def reboot():
+    # Logging now because the run command won't actually return
+    logevent("shutdown", "reboot", "Shutting down with -r (reboot) being issued now")
+    runcmd(['sudo', 'shutdown', '-r', 'now'])
+    
+
+def runcmd(cmd):
+    runprocess = subprocess.Popen(cmd)
+    runstatus = subprocess.Popen.poll(runprocess)
+    runcount = 0 
+    while runstatus == None and runcount <= 10:
+        time.sleep(2)
+        runcount += 1
+        runstatus = subprocess.Popen.poll(runprocess)
+    if runstatus is None:
+        runstatus = "Timedout"
+    logevent("cmd", " ".join(cmd), "Command result: %s" % runstatus)
+
+def updatebt(newbt):
+    if newbt == 0:
+        btstr = "block"
+    elif newbt == 1:
+        btstr = "unblock"
+    mycmd = ['sudo', 'rfkill', btstr, 'bluetooth']
+    runcmd(mycmd)
+
 
 def logevent(etype, edata, edesc):
     global WHOAMI
