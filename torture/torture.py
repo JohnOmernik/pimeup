@@ -165,13 +165,19 @@ def FirePlace():
     global allcolors
     global heat
     global fireplace
-
+    global hbinterval
+    global lasthb
     # Every cycle there will be some random cololing
     # Consider adding a degree of random whether a pixel cools
 
     try:
         while True:
             if fireplace == True:
+                curtime = int(time.time())
+                if curtime - lasthb > hbinterval:
+                    logevent("heartbeat", "running", "Standard HB for torture room")
+                    lasthb = curtime
+
                 for i in range(numpixels):
                     if random.randint(0, 255) < COOLING:
                         tval = heat[i] - random.randint(0, ((COOLING * 10) / numpixels) + 2)

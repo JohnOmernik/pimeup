@@ -44,11 +44,11 @@ def main():
     soundfiles = ['/home/pi/spencer_young.wav', '/home/pi/spencer2.wav', '/home/pi/spencer3.wav']
 
     while True:
-   #     curtime = int(time.time())
-   #     if curtime - lasthb > hbinterval:
-   #         logevent("heartbeat", "Working", "Standard HB")
-   #         lasthb = curtime
         curfile = random.choice(soundfiles)
+        curtime = int(time.time())
+        if curtime - lasthb > hbinterval:
+            logevent("heartbeat", "Working", "Cur Childhood sound file: %s" % curfile)
+            lasthb = curtime
         curstream = open(curfile, "rb")
         data = curstream.read(size)
         while data:
