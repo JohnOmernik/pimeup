@@ -40,6 +40,8 @@ def main():
     global WHATAMI_BASE
     global WHOAMI
 
+    # Initial Startup sleep to ensure domain resolution is working - This could be changed to a check of DNS rather than a race condition
+    time.sleep(10)
     curconf = None
     oldconf = None
     # First run git pull
