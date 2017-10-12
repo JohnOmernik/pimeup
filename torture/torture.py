@@ -175,7 +175,7 @@ def FirePlace():
             if fireplace == True:
                 curtime = int(time.time())
                 if curtime - lasthb > hbinterval:
-                    logevent("heartbeat", "running", "Standard HB for torture room")
+                    logevent("heartbeat", "Working", "Standard HB for torture room")
                     lasthb = curtime
 
                 for i in range(numpixels):
