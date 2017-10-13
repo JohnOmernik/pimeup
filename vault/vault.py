@@ -296,15 +296,19 @@ def handle_buttons(buttons):
     global playsound
     global normallight
     global goldlight
-
+    changed = False
 
     if (buttons & cwiid.BTN_A):
         previdx = eventidx
-        if eventidx == len(eventarray) - 1:
-            eventidx = 0
-        else:
+        if eventidx == 0:
             eventidx += 1
-        print("Setting index to: %s" % eventidx)
+            changed = True
+    if (buttons & cwiid.BTN_1):
+        previdx = eventidx
+        if eventidx != 0:
+            eventidx = 0
+            changed = True
+    if changed == True:    
         curtime = int(time.time())
         goldlight = eventarray[eventidx]["goldlight"]
         normallight = eventarray[eventidx]["normallight"]
