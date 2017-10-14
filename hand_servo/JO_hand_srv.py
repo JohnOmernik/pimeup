@@ -10,27 +10,36 @@ from socket import error as socket_error
 pwm = Adafruit_PCA9685.PCA9685(0x40)
 pwm.set_pwm_freq(60)
 
-SRV_OPTIONS = []
-SERVOS = {}
+SERVOS = []
+
+SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
+SERVOS.append({"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
+SERVOS.append({"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575, "INVERT": True})
+SERVOS.append({"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550, "INVERT": True})
+SERVOS.append({"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
+SERVOS.append({"DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": False})
+SERVOS.append({"DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660, "INVERT": False})
+SERVOS.append({"DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620, "INVERT": False})
 
 
 
-SERVOS['0'] = {"DESC":"Jaw Movement", "RANGE_MIN": 300, "RANGE_MAX": 500}
-SERVOS['1'] = {"DESC":"Eye Movement", "RANGE_MIN": 400, "RANGE_MAX": 600}
-SERVOS['2'] = {"DESC":"Eye Blink", "RANGE_MIN": 300, "RANGE_MAX": 500}
-SERVOS['3'] = {"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False}}
-SERVOS['4'] = {"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT":True}
-SERVOS['5'] = {"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600, "INVERT": True}
-SERVOS['6'] = {"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550, "INVERT": True}
-SERVOS['7'] = {"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True}
+#SERVOS['0'] = {"DESC":"Jaw Movement", "RANGE_MIN": 300, "RANGE_MAX": 500}
+#SERVOS['1'] = {"DESC":"Eye Movement", "RANGE_MIN": 400, "RANGE_MAX": 600}
+#SERVOS['2'] = {"DESC":"Eye Blink", "RANGE_MIN": 300, "RANGE_MAX": 500}
+#SERVOS['3'] = {"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False}}
+#SERVOS['4'] = {"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT":True}
+#SERVOS['5'] = {"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600, "INVERT": True}
+#SERVOS['6'] = {"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550, "INVERT": True}
+#SERVOS['7'] = {"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True}
 
 
 
 def main():
 
-    TCP_IP = '192.168.0.122'
+    TCP_IP = '192.168.0.130'
     TCP_PORT = 30000
     BUFFER_SIZE = 10  # Normally 1024, but we want fast response
+    print("Listening on %s:%s" % (TCP_IP, TCP_PORT))
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((TCP_IP, TCP_PORT))
     s.listen(1)
@@ -41,7 +50,7 @@ def main():
     try:
         while True:
             data = conn.recv(BUFFER_SIZE)
-            if not data: 
+            if not data:
                 continue
             else:
                 tdata = data.split(":")
@@ -49,12 +58,12 @@ def main():
                     print("Ignoring Bad Data: %s" % data)
                     continue
                 else:
-                    SRV_NUM = tdata[0]
-                    SRV_VAL = int(tdata[1])
-                    if SERVOS[SRV_NUM]["INVERT"] == True:
-                        SRV_VAL = abs(SRV_VAL - 100)
+                    servo_idx = int(tdata[0])
+                    servo_val = int(tdata[1])
+                    if SERVOS[servo_idx]["INVERT"] == True:
+                        servo_val = abs(servo_val - 100)
                     print("Recieved Data Update: %s" % data)
-                    setval = (SRV_VAL * (SERVOS[SRV_NUM]['RANGE_MAX'] - SERVOS[SRV_NUM]['RANGE_MIN']) / 100) + SERVOS[SRV_NUM]['RANGE_MIN']
+                    setval = (servo_val * (SERVOS[servo_idx]['RANGE_MAX'] - SERVOS[servo_idx]['RANGE_MIN']) / 100) + SERVOS[servo_idx]['RANGE_MIN']
                     print("Setting Servo: %s (%s) to %s" % (tdata[0], SERVOS[tdata[0]]['DESC'], setval))
                     pwm.set_pwm(int(tdata[0]), 0, setval)
     except socket_error:
