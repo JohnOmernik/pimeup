@@ -12,6 +12,9 @@ pwm.set_pwm_freq(60)
 
 SERVOS = []
 
+
+DEBUG = True
+
 SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
 SERVOS.append({"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
 SERVOS.append({"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575, "INVERT": True})
@@ -38,7 +41,7 @@ def main():
 
     TCP_IP = '192.168.0.130'
     TCP_PORT = 30000
-    BUFFER_SIZE = 10  # Normally 1024, but we want fast response
+    BUFFER_SIZE = 5  # Normally 1024, but we want fast response
     print("Listening on %s:%s" % (TCP_IP, TCP_PORT))
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((TCP_IP, TCP_PORT))
@@ -60,12 +63,17 @@ def main():
                 else:
                     servo_idx = int(tdata[0])
                     servo_val = int(tdata[1])
-                    if SERVOS[servo_idx]["INVERT"] == True:
-                        servo_val = abs(servo_val - 100)
-                    print("Recieved Data Update: %s" % data)
-                    setval = (servo_val * (SERVOS[servo_idx]['RANGE_MAX'] - SERVOS[servo_idx]['RANGE_MIN']) / 100) + SERVOS[servo_idx]['RANGE_MIN']
-                    print("Setting Servo: %s (%s) to %s" % (tdata[0], SERVOS[tdata[0]]['DESC'], setval))
-                    pwm.set_pwm(int(tdata[0]), 0, setval)
+                    if servo_idx >= 0 and servo_idx < 8:
+                        if SERVOS[servo_idx]["INVERT"] == True:
+                            servo_val = abs(servo_val - 100)
+                        print("Recieved Data Update: %s" % data)
+                        setval = (servo_val * (SERVOS[servo_idx]['RANGE_MAX'] - SERVOS[servo_idx]['RANGE_MIN']) / 100) + SERVOS[servo_idx]['RANGE_MIN']
+                        print("Setting Servo: %s (%s) to %s" % (tdata[0], SERVOS[servo_idx]['DESC'], setval))
+                        pwm.set_pwm(servo_idx, 0, setval)
+                    else:
+                        if DEBUG:
+                            print("Idx: %s - Val: %s" % (servo_idx, servo_val))
+
     except socket_error:
         exitGracefully()
     except KeyboardInterrupt:
