@@ -12,14 +12,31 @@ pwm.set_pwm_freq(60)
 
 SRV_OPTIONS = []
 
+
+#added 25 to fingers, to make them close better
+
+
+
 SRV_OPTIONS.append({"SRV": 0, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 3, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550})
-SRV_OPTIONS.append({"SRV": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575})
+SRV_OPTIONS.append({"SRV": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 600})
+SRV_OPTIONS.append({"SRV": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600})
+SRV_OPTIONS.append({"SRV": 3, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 575})
+SRV_OPTIONS.append({"SRV": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 600})
 SRV_OPTIONS.append({"SRV": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600})
 SRV_OPTIONS.append({"SRV": 6, "DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660})
 SRV_OPTIONS.append({"SRV": 7, "DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620})
+
+
+
+# Orginal Values
+#SRV_OPTIONS.append({"SRV": 0, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575})
+#SRV_OPTIONS.append({"SRV": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575})
+#SRV_OPTIONS.append({"SRV": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575})
+#SRV_OPTIONS.append({"SRV": 3, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550})
+#SRV_OPTIONS.append({"SRV": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575})
+#SRV_OPTIONS.append({"SRV": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600})
+#SRV_OPTIONS.append({"SRV": 6, "DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660})
+#SRV_OPTIONS.append({"SRV": 7, "DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620})
 
 def main():
 
