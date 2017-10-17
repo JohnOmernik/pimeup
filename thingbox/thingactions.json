@@ -1,0 +1,5 @@
+[
+{"NAME": "upandready", "KEY": "U", "DESC": "Bring up to ready position", "ACTION": "7:380,P:0.5,6:490,P:0.3,5:500,P:0.3,4:750,3:300,2:325,1:300,0:575"},
+{"NAME": "putaway", "KEY": "P", "DESC": "Folds up ready to sleep", "ACTION": "0:275,1:560,2:560,3:540,4:320,P:0.2,5:500,6:340,P:0.3,7:600"}
+]
+

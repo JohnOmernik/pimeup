@@ -5,77 +5,80 @@ import Adafruit_PCA9685
 import time
 import random
 import sys
-
+import json
 # Initialise the PCA9685 using the default address (0x40).
 pwm = Adafruit_PCA9685.PCA9685(0x40)
 pwm.set_pwm_freq(60)
 
 SRV_OPTIONS = []
+ACTIONS = {}
 
 
-#added 25 to fingers, to make them close better
-
-
-
-SRV_OPTIONS.append({"SRV": 0, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 600})
-SRV_OPTIONS.append({"SRV": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600})
-SRV_OPTIONS.append({"SRV": 3, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 575})
-SRV_OPTIONS.append({"SRV": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 600})
-SRV_OPTIONS.append({"SRV": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600})
-SRV_OPTIONS.append({"SRV": 6, "DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660})
-SRV_OPTIONS.append({"SRV": 7, "DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620})
+thingfile = "/home/pi/pimeup/thingbox/thing.json"
+thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 
 
 
-# Orginal Values
-#SRV_OPTIONS.append({"SRV": 0, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575})
-#SRV_OPTIONS.append({"SRV": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575})
-#SRV_OPTIONS.append({"SRV": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575})
-#SRV_OPTIONS.append({"SRV": 3, "DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550})
-#SRV_OPTIONS.append({"SRV": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575})
-#SRV_OPTIONS.append({"SRV": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600})
-#SRV_OPTIONS.append({"SRV": 6, "DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660})
-#SRV_OPTIONS.append({"SRV": 7, "DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620})
 
 def main():
+    global SRV_OPTIONS
+    global ACTIONS
+
+    SRV_OPTIONS = loadfile(thingfile)
+    ACTIONS = loadfile(thingactionfile)
 
     cur_finger = -1
-
+    ACT_SHORT = []
+    upact = ""
+    downact = ""
+    for x in ACTIONS:
+        if x['KEY'] == "U":
+            upact = x['ACTION']
+        if x['KEY'] == "P":
+            downact = x['ACTION']
+        ACT_SHORT.append(x['KEY'])
+    processAction(upact)
     while True:
         if cur_finger == -1:
             printServos()
+            printAction()
             print("")
-            srv_sel = raw_input("Servo to move: ")
+            srv_sel = raw_input("Servo to move or action: ")
             int_srv = -1
 
             if srv_sel == "e":
                 print("Exiting!")
                 break
-            try:
-                int_srv = int(srv_sel)
-            except:
-                print("Selected Servors must be an integer in  this list:")
-                printServos()
-                continue
-
-            for y in SRV_OPTIONS:
-                if int_srv == y['SRV']:
-                    cur_finger = int_srv
-                    break
-
-            if cur_finger == int_srv:
-                continue
+            if srv_sel in ACT_SHORT:
+                for x in ACTIONS:
+                    if srv_sel == x['KEY']:
+                        print("Running Action: %s" % x['NAME'])
+                        processAction(x['ACTION'])
             else:
-                print("Servo provided (%s) not in the following List: Please try again")
-                printServos()
+                try:
+                    int_srv = int(srv_sel)
+                except:
+                    print("Selected Servors must be an integer or action in this list:")
+                    printServos()
+                    printAction()
+                    continue
+
+                for y in SRV_OPTIONS:
+                    if int_srv == y['IDX']:
+                        cur_finger = int_srv
+                        break
+
+                if cur_finger == int_srv:
+                    continue
+                else:
+                    print("Servo provided (%s) not in the following List: Please try again")
+                    printServos()
         else:
             for y in SRV_OPTIONS:
-                if cur_finger == y['SRV']:
+                if cur_finger == y['IDX']:
                     mysrv = y
                     break
 
-            
             print("Currently working with Servo: %s - Press q to quit this" % cur_finger)
             printServo(mysrv)
             while True:
@@ -90,10 +93,10 @@ def main():
                         print("You must enter a integer")
                         continue
                     pwm.set_pwm(cur_finger, 0, myval)
-        
 
 
-
+    processAction(downact)
+    time.sleep(2)
     pwm.set_pwm(0, 4096, 0)
     pwm.set_pwm(1, 4096, 0)
     pwm.set_pwm(2, 4096, 0)
@@ -101,18 +104,54 @@ def main():
     pwm.set_pwm(4, 4096, 0)
     pwm.set_pwm(5, 4096, 0)
     pwm.set_pwm(6, 4096, 0)
+    pwm.set_pwm(7, 4096, 0)
     sys.exit(0)
 
 
 def printServos():
+    print("")
     print ("All Available Servos: ")
+    print("==============================")
     for x in SRV_OPTIONS:
         printServo(x)
-
+    print("")
 
 
 def printServo(s):
-    print("Servo Number: %s - Desc: %s - Min Movement: %s - Max Movement: %s" % (s['SRV'], s['DESC'], s['RANGE_MIN'], s['RANGE_MAX']))
+    print("Servo Number: %s - Desc: %s - Min Movement: %s - Max Movement: %s - Notes: %s" % (s['IDX'], s['DESC'], s['RANGE_MIN'], s['RANGE_MAX'], s['NOTES']))
+
+
+def printAction():
+    print("")
+    print("Available Actions: ")
+    print("==============================")
+    for x in ACTIONS:
+        print("\t%s - %s - %s" % (x['KEY'], x['NAME'], x['DESC']))
+    print("")
+
+def loadfile(f):
+    o = open(f, "rb")
+    tj = o.read()
+    o.close()
+    return json.loads(tj)
+
+
+def processAction(actStr):
+
+    for action in actStr.split(","):
+        tval = action.split(":")
+        act = tval[0]
+        val = tval[1]
+        if act == "P":
+            val = float(val)
+            time.sleep(val)
+        else:
+            act = int(act)
+            val = int(val)
+            pwm.set_pwm(act, 0, val)
+
+
+
 
 def setServoPulse(channel, pulse):
   pulseLength = 1000000                   # 1,000,000 us per second

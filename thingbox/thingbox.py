@@ -4,6 +4,7 @@ import time
 import random
 import sys
 import socket
+import json
 from socket import error as socket_error
 
 # Initialise the PCA9685 using the default address (0x40).
@@ -20,7 +21,7 @@ SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": Fal
 SERVOS.append({"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": True})
 SERVOS.append({"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600, "INVERT": True})
 SERVOS.append({"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 600, "INVERT": True})
-SERVOS.append({"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 625, "INVERT": True})
+SERVOS.append({"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 750, "INVERT": True})
 SERVOS.append({"DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": False})
 SERVOS.append({"DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660, "INVERT": False})
 SERVOS.append({"DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620, "INVERT": False})
