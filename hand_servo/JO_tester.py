@@ -13,6 +13,7 @@ pwm.set_pwm_freq(60)
 SRV_OPTIONS = []
 ACTIONS = {}
 
+STATUS=""
 
 thingfile = "/home/pi/pimeup/thingbox/thing.json"
 thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
@@ -23,6 +24,7 @@ thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 def main():
     global SRV_OPTIONS
     global ACTIONS
+    global STATUS
 
     SRV_OPTIONS = loadfile(thingfile)
     ACTIONS = loadfile(thingactionfile)
@@ -37,9 +39,10 @@ def main():
         if x['KEY'] == "P":
             downact = x['ACTION']
         ACT_SHORT.append(x['KEY'])
-    processAction(upact)
+#    processAction(upact)
     while True:
         if cur_finger == -1:
+            print("Current Status: %s" % STATUS)
             printServos()
             printAction()
             print("")
@@ -50,14 +53,12 @@ def main():
                 print("Exiting!")
                 break
             if srv_sel in ACT_SHORT:
-                for x in ACTIONS:
-                    if srv_sel == x['KEY']:
-                        print("Running Action: %s" % x['NAME'])
-                        processAction(x['ACTION'])
+                processAction(srv_sel)
             else:
                 try:
                     int_srv = int(srv_sel)
                 except:
+
                     print("Selected Servors must be an integer or action in this list:")
                     printServos()
                     printAction()
@@ -133,27 +134,65 @@ def loadfile(f):
     o = open(f, "rb")
     tj = o.read()
     o.close()
-    return json.loads(tj)
 
-
-def processAction(actStr):
-
-    for action in actStr.split(","):
-        tval = action.split(":")
-        act = tval[0]
-        val = tval[1]
-        if act == "P":
-            val = float(val)
-            time.sleep(val)
+    pj = ""
+    for line in tj.split("\n"):
+        if line.strip() == "" or line.strip().find("#") == 0:
+            pass
         else:
-            act = int(act)
-            val = int(val)
-            if val >= 0:
-                pwm.set_pwm(act, 0, val)
+            pj += line.strip() + "\n"
+    print(pj)
+    return json.loads(pj)
+
+
+def processAction(actKey):
+    global STATUS
+    act = {}
+    bfound = False
+    for x in ACTIONS:
+        if actKey == x['KEY']:
+            act = x
+            bfound = True
+    if bfound == True:
+        new_status = act['STATUS']
+        req_status = act['REQ_STATUS']
+        actStr = act['ACTION']
+        if req_status != "":
+            if STATUS.find(req_status) < 0:
+                print("Can't do it")
+                print("STATUS: %s" % STATUS)
+                print("req_status: %s" % req_status)
+                return
+        print("Running Action: %s" % act['NAME'])
+        for action in actStr.split(","):
+            tval = action.split(":")
+            act = tval[0]
+            val = tval[1]
+            if act == "P":
+                val = float(val)
+                time.sleep(val)
+            elif act == "A":
+                shutdown = False
+                try:
+                    val = int(val)
+                    if val == 0:
+                        shutdown = True
+                except:
+                    shutdown = False
+                if shutdown == True:
+                    for x in range(len(SRV_OPTIONS) - 1):
+                        pwm.set_pwm(x, 4096, 0)
+                else:
+                    processAction(val)
             else:
-                pwm.set_pwm(act, 4096, 0)
-
-
+                act = int(act)
+                val = int(val)
+                if val >= 0:
+                    pwm.set_pwm(act, 0, val)
+                else:
+                    pwm.set_pwm(act, 4096, 0)
+        if new_status != "":
+            STATUS = new_status
 
 def setServoPulse(channel, pulse):
   pulseLength = 1000000                   # 1,000,000 us per second

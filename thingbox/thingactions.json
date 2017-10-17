@@ -1,5 +1,24 @@
 [
-{"NAME": "upandready", "KEY": "U", "DESC": "Bring up to ready position", "ACTION": "7:380,P:0.5,6:240,P:0.3,5:500,P:0.5,4:750,P:0.2,3:300,P:0.2,2:325,P:0.2,1:300,P:0.2,0:575"},
-{"NAME": "putaway", "KEY": "P", "DESC": "Folds up ready to sleep", "ACTION": "0:275,1:560,P:0.5,2:560,P:0.5,3:540,P:0.5,4:320,P:0.5,5:500,6:340,P:0.3,7:590,P:0.2,7:600,P:0.5,7:-1"}
+{"NAME": "upandready", "STATUS":"HANDUPLIDUP", "REQ_STATUS": "", "KEY": "U", "DESC": "Bring up to ready position", "ACTION": "A:O,P:0.2,7:380,P:0.5,6:400,P:0.3,5:500,P:0.5,4:750,P:0.2,3:300,P:0.2,2:325,P:0.2,1:300,P:0.4,0:575,P:0.4,A:0"},
+{"NAME": "putaway", "STATUS": "HANDDOWN", "REQ_STATUS": "HANDUPLIDUP", "KEY": "P", "DESC": "Folds up ready to sleep", "ACTION": "0:275,1:560,P:0.5,2:560,P:0.5,3:540,P:0.5,4:320,P:0.5,5:450,6:550,P:0.3,7:520,P:0.3,7:530,P:0.5,A:0"},
+{"NAME": "pointforward", "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "F", "DESC": "Point forward", "ACTION": "0:275,1:560,2:560,3:540,4:300,P:0.2,5:300,P:0.2,1:300,P:0.2,1:400,P:0.2,1:300,P:0.2,1:400,P:0.2,A:U"},
+{"NAME": "allstop", "STATUS":"", "REQ_STATUS": "", "KEY": "A", "DESC": "Stop all servos", "ACTION": "A:0"},
+{"NAME": "lidup", "STATUS":"LIDUP", "REQ_STATUS": "", "KEY": "O", "DESC": "Opens the Lid", "ACTION": "8:600"},
+{"NAME": "liddown", "STATUS":"LIDDOWN", "REQ_STATUS": "HANDDOWN", "KEY": "C", "DESC": "Closesthe Lid", "ACTION": "8:350,P:0.5,8:320,P:0.5,8:250"}
 ]
+
+# {"NAME": "", "STATUS":"", "REQ_STATUS": "", "KEY": "", "DESC": "", "ACTION": ""}
+
+#All Available Servos:
+#==============================
+#Servo Number: 0 - Desc: Thumb - Min Movement: 275 - Max Movement: 575 - Notes: 275 is in, 575 is out
+#Servo Number: 1 - Desc: Pointer - Min Movement: 300 - Max Movement: 560 - Notes: 300 is up, 560 is down
+#Servo Number: 2 - Desc: Middle - Min Movement: 325 - Max Movement: 560 - Notes: 325 is up, 560 is down
+#Servo Number: 3 - Desc: Ring - Min Movement: 300 - Max Movement: 540 - Notes: 300 is up, 540 is down
+#Servo Number: 4 - Desc: Pinky - Min Movement: 300 - Max Movement: 740 - Notes: 300 is down, 740 is up
+#Servo Number: 5 - Desc: WristFlex - Min Movement: 300 - Max Movement: 600 - Notes: 600 is a bit bent back, 500 is straight up
+#Servo Number: 6 - Desc: WristTurn - Min Movement: 250 - Max Movement: 550 - Notes: 250 is back facing right, 400 facing forward, 550 facing right
+#Servo Number: 7 - Desc: WristUp - Min Movement: 330 - Max Movement: 600 - Notes: 330 is past staight a bit, 380 is straight up,  600 is laying down
+#Servo Number: 8 - Desc: Lid - Min Movement: 240 - Max Movement: 600 - Notes: 240 Lid closed, 600 lid open
+
 
