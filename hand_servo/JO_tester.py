@@ -148,8 +148,10 @@ def processAction(actStr):
         else:
             act = int(act)
             val = int(val)
-            pwm.set_pwm(act, 0, val)
-
+            if val >= 0:
+                pwm.set_pwm(act, 0, val)
+            else:
+                pwm.set_pwm(act, 4096, 0)
 
 
 

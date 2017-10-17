@@ -5,7 +5,7 @@
 {"IDX": 3, "DESC":"Ring", "RANGE_MIN":  300, "RANGE_MAX": 540, "INVERT": 1, "NOTES": "300 is up, 540 is down"},
 {"IDX": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 740, "INVERT": 0, "NOTES": "300 is down, 740 is up"},
 {"IDX": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": 0, "NOTES": "600 is a bit bent back, 500 is straight up"},
-{"IDX": 6, "DESC":"WristTurn", "RANGE_MIN": 240, "RANGE_MAX": 560, "INVERT": 0, "NOTES": "240 is back of hand to front, 340 is back of hand to left, 490 back to back, 560 back right"},
+{"IDX": 6, "DESC":"WristTurn", "RANGE_MIN": 240, "RANGE_MAX": 560, "INVERT": 0, "NOTES": "240 is back of hand to back, 340 is back of hand to left, 490 back to front, 560 back right"},
 {"IDX": 7, "DESC":"WristUp", "RANGE_MIN": 330, "RANGE_MAX" : 600, "INVERT": 0, "NOTES": "330 is past staight a bit, 380 is straight up,  600 is laying down"}
 ]
 
