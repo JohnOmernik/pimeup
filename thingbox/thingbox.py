@@ -138,7 +138,7 @@ def processAction(actKey):
                 except:
                     shutdown = False
                 if shutdown == True:
-                    for x in range(len(SRV_OPTIONS) - 1):
+                    for x in range(len(SRV_OPTIONS)):
                         pwm.set_pwm(x, 4096, 0)
                 else:
                     processAction(val)
