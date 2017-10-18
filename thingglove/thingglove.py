@@ -8,6 +8,8 @@ import cwiid
 
 udp_ip = '192.168.0.130'
 udp_port = 30000
+udp_sock = None
+
 tdelay = 0.2
 DEBUG = 0
 ACC_DEBUG = 0
@@ -15,9 +17,10 @@ BUT_DEBUG = 0
 FLX_DEBUG = 0
 PRC_DEBUG = 0
 NET_DEBUG = 1
-NETWORK = 0
-#SHOWLIST = [ "Wrist", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
-SHOWLIST = [ "WristFlex", "WristTurn" ]
+NETWORK = 1
+
+SHOWLIST = [ "WristFlex", "WristTurn", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
+#SHOWLIST = [ "WristFlex", "WristTurn" ]
 # Defaults:
 mysens_thres = 3
 mychng_thres = 5
@@ -70,7 +73,7 @@ def main():
 
 # Setup Network (Currently UDP)
     if NETWORK == 1:
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 
 # Setup Wii remote
     print ("Press 1+2 to connect Wii")
@@ -146,19 +149,16 @@ def handle_buttons(buttons):
     # It also changes what the other buttons do
 
     if (buttons & cwiid.BTN_B):
-        if DEBUG:
-            print("Setting B True")
         b_val = True
     else:
-        if DEBUG:
-            print("Setting B False")
         b_val = False
 
     if (buttons  & cwiid.BTN_UP):
         if b_val == False:
             procAction("O")
     elif (buttons & cwiid.BTN_DOWN):
-        print("Down")
+        if b_val == False:
+            procAction("C")
     elif (buttons & cwiid.BTN_LEFT):
         print("Left")
     elif (buttons & cwiid.BTN_RIGHT):
@@ -170,21 +170,25 @@ def handle_buttons(buttons):
     elif (buttons & cwiid.BTN_PLUS):
         print("Plus")
     elif (buttons & cwiid.BTN_MINUS):
-        print("Minus")
+        # Locks the wrist up
+        procAction("L")
     elif (buttons & cwiid.BTN_A):
         # A will summon thing if B is not pressed, and put him a way if B is pressed
         if b_val == False:
             procAction("U")
-        if b_val == True:"
+        elif b_val == True:
             procAction("P")
     elif (buttons & cwiid.BTN_HOME):
         # Home Calms Servos
-        procAction("0")
+        procAction("A")
 
 def sendCmd(sendstr, curname):
     global udp_sock
+    if len(sendstr) != 5:
+        print("*WARNING CMD SHOULD BE only 5 characters!")
+
     if (DEBUG or NET_DEBUG):
-        if curname in SHOWLIST or sendstr.find("A") == 0::
+        if curname in SHOWLIST or sendstr.find("A") == 0:
             print ("******** %s Sending this: %s " % (curname, sendstr))
     if NETWORK:
         udp_sock.sendto(sendstr, (udp_ip, udp_port))
@@ -198,23 +202,25 @@ def procAction(action):
     if action == "U":
         if STATUS.find("LIDUP") < 0:
             procAction("O")
-        sendCmd("A:U", "Action")
+        sendCmd("A:U::", "Action")
         STATUS = "LIDUPHANDUP"
     elif action == "O":
-        sendCmd("A:O", "Action")
+        sendCmd("A:O::", "Action")
         STATUS = "LIDUP"
     elif action == "P":
         if STATUS.find("HANDUP") >= 0:
-            sendCmd("A:P", "Action")
+            sendCmd("A:P::", "Action")
             STATUS = "HANDDOWN"
     elif action == "C":
         if STATUS.find("HANDDOWN") < 0:
             procAction("P")
-        sendCmd("A:C", "Action")
+        sendCmd("A:C::", "Action")
         STATUS = "LIDDOWNHANDDOWN"
-    elif action == "0":
-        sendCmd("A:0", "Action")
-
+    elif action == "A":
+        sendCmd("A:A::", "Action")
+    elif action == "L":
+        sendCmd("A:L::", "Action")
+    
 
 
 
