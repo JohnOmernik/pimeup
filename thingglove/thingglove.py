@@ -10,11 +10,20 @@ udp_ip = '192.168.0.130'
 udp_port = 30000
 tdelay = 0.2
 DEBUG = 0
+ACC_DEBUG = 0
+BUT_DEBUG = 0
+FLX_DEBUG = 0
+PRC_DEBUG = 0
+NET_DEBUG = 1
 NETWORK = 0
-SHOWLIST = [ "Wrist", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
-mythres = 2
-
-
+#SHOWLIST = [ "Wrist", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
+SHOWLIST = [ "WristFlex", "WristTurn" ]
+# Defaults:
+mysens_thres = 3
+mychng_thres = 5
+# Used for Testing:
+tmpsens_thres = 2
+tmpchng_thres = 5
 # Hardware SPI configuration: (Do not Modify)
 ####################
 SPI_PORT   = 0
@@ -22,13 +31,16 @@ SPI_DEVICE = 0
 mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
 ####################
 
+
+STATUS = ""
 SENSORS = [
-    {"NAME": "Pinky", "TYPE": "adc", "REMOTE": 4, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "THRES": mythres},
-    {"NAME": "Ring", "TYPE": "adc", "REMOTE": 3, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "THRES": mythres},
-    {"NAME": "Middle", "TYPE": "adc", "REMOTE": 2, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "THRES": mythres},
-    {"NAME": "Index", "TYPE": "adc", "REMOTE": 1, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "THRES": mythres},
-    {"NAME": "Thumb", "TYPE": "adc", "REMOTE": 0, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "THRES": mythres},
-    {"NAME": "Wrist", "TYPE": "acc", "REMOTE": 5, "MIN": 1000, "MAX": 0, "CHANGE":0, "LAST": 0, "CHANGED": False, "THRES": mythres}
+    {"NAME": "Pinky", "TYPE": "adc", "REMOTE": 4, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
+    {"NAME": "Ring", "TYPE": "adc", "REMOTE": 3, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
+    {"NAME": "Middle", "TYPE": "adc", "REMOTE": 2, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
+    {"NAME": "Index", "TYPE": "adc", "REMOTE": 1, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
+    {"NAME": "Thumb", "TYPE": "adc", "REMOTE": 0, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
+    {"NAME": "WristFlex", "TYPE": "acc", "REMOTE": 5, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": tmpsens_thres, "CHNG_THRES": mychng_thres, "INVERT": True},
+    {"NAME": "WristTurn", "TYPE": "acc", "REMOTE": 6, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": tmpsens_thres, "CHNG_THRES": mychng_thres, "INVERT": False}
 ]
 
 #SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
@@ -54,6 +66,7 @@ def main():
     global NETWORK
     global b_val
     global udp_sock
+    global STATUS
 
 # Setup Network (Currently UDP)
     if NETWORK == 1:
@@ -89,41 +102,44 @@ def main():
         while True:
         # read the analog pin
             if b_val == True:
-                for x in range(len(SENSORS)):
-                    if x['TYPE'] == 'adc':
-                        flex_val = mcp.read_adc(x)
-                        procValue(x, flex_val)
+                if STATUS == "LIDUPHANDUP":
+                    for x in range(len(SENSORS)):
+                        if SENSORS[x]['TYPE'] == 'adc':
+                            flex_val = mcp.read_adc(x)
+                            procValue(x, flex_val)
             time.sleep(tdelay)
     except KeyboardInterrupt:
         print("")
         print("Weee - Exiting")
-        s.close()
         sys.exit(0)
 
 
 def callback(mesg_list, time):
     global SENSORS
     global b_val
+    global STATUS
     for mesg in mesg_list:
         if mesg[0] == cwiid.MESG_BTN:
             handle_buttons(mesg[1])
-            if DEBUG:
+            if BUT_DEBUG or DEBUG:
                 print("Time: %s" % time)
                 print 'Button Report: %.4X' % mesg[1]
         elif mesg[0] == cwiid.MESG_ACC:
             x = mesg[1][cwiid.X]
             y = mesg[1][cwiid.Y]
             z = mesg[1][cwiid.Z]
-
-            if DEBUG:
-                print('Acc Report: x=%d, y=%d, z=%d') % (x, y, z)
+            if STATUS == "LIDUPHANDUP":
                 if b_val == True:
-                    provValue(5, y)
+                    procValue(5, y)
+                    procValue(6, x)
+            if ACC_DEBUG or DEBUG:
+                print('b_val: %s - Acc Report: x=%d, y=%d, z=%d') % (b_val, x, y, z)
         else:
             print 'Unknown Report'
 
 def handle_buttons(buttons):
     global b_val
+    global status
 
     # The B (trigger) Button does cool things for us
     # When pressed that allows the glove sensors to be read and sent
@@ -139,7 +155,8 @@ def handle_buttons(buttons):
         b_val = False
 
     if (buttons  & cwiid.BTN_UP):
-        print("Up")
+        if b_val == False:
+            procAction("O")
     elif (buttons & cwiid.BTN_DOWN):
         print("Down")
     elif (buttons & cwiid.BTN_LEFT):
@@ -155,9 +172,49 @@ def handle_buttons(buttons):
     elif (buttons & cwiid.BTN_MINUS):
         print("Minus")
     elif (buttons & cwiid.BTN_A):
-        print("A")
+        # A will summon thing if B is not pressed, and put him a way if B is pressed
+        if b_val == False:
+            procAction("U")
+        if b_val == True:"
+            procAction("P")
     elif (buttons & cwiid.BTN_HOME):
-        print("Home")
+        # Home Calms Servos
+        procAction("0")
+
+def sendCmd(sendstr, curname):
+    global udp_sock
+    if (DEBUG or NET_DEBUG):
+        if curname in SHOWLIST or sendstr.find("A") == 0::
+            print ("******** %s Sending this: %s " % (curname, sendstr))
+    if NETWORK:
+        udp_sock.sendto(sendstr, (udp_ip, udp_port))
+
+def procAction(action):
+    global SENSORS
+    global b_val
+    global udp_sock
+    global STATUS
+
+    if action == "U":
+        if STATUS.find("LIDUP") < 0:
+            procAction("O")
+        sendCmd("A:U", "Action")
+        STATUS = "LIDUPHANDUP"
+    elif action == "O":
+        sendCmd("A:O", "Action")
+        STATUS = "LIDUP"
+    elif action == "P":
+        if STATUS.find("HANDUP") >= 0:
+            sendCmd("A:P", "Action")
+            STATUS = "HANDDOWN"
+    elif action == "C":
+        if STATUS.find("HANDDOWN") < 0:
+            procAction("P")
+        sendCmd("A:C", "Action")
+        STATUS = "LIDDOWNHANDDOWN"
+    elif action == "0":
+        sendCmd("A:0", "Action")
+
 
 
 
@@ -165,19 +222,23 @@ def procValue(sens, val):
     global SENSORS
     global b_val
     global udp_sock
+    global STATUS
 
     curname = SENSORS[sens]['NAME']
+    if (DEBUG or PRC_DEBUG) and curname in SHOWLIST:
+        print("Proc for %s" % curname)
 
-    if val > SENSORS[s]['MAX']:
+    if val > SENSORS[sens]['MAX']:
         SENSORS[sens]['MAX'] = val
-    if v < SENSORS[sens]['MIN']:
+    if val < SENSORS[sens]['MIN']:
         SENSORS[sens]['MIN'] = val
     if SENSORS[sens]['MAX'] == SENSORS[sens]['MIN']:
         SENSORS[sens]['MAX'] += 1
 
     sendval = (float(val) - SENSORS[sens]['MIN']) / (SENSORS[sens]['MAX'] - SENSORS[sens]['MIN'])
     sendval = int(sendval * 100)
-
+    if SENSORS[sens]['INVERT'] == True:
+        sendval = 100 - sendval
     if sendval < 10:
         pad = "00"
     elif sendval < 100:
@@ -186,21 +247,18 @@ def procValue(sens, val):
         pad = ""
 
     sendstr = str(SENSORS[sens]['REMOTE']) + ":" + pad + str(sendval)
-    if DEBUG:
-        if curname in SHOWLIST:
-            print("%s - Value: %s - Min: %s - Max: %s - Sendval: %s" % (curname, val, SENSORS[sens]['MIN'], SENSORS[sens]['MAX'], sendval))
+    if (DEBUG or FLX_DEBUG or PRC_DEBUG) and curname in SHOWLIST:
+        print("%s - Value: %s - Min: %s - Max: %s - Last: %s - sens_thres: %s - chng_thres: %s - Sendval: %s" % (curname, val, SENSORS[sens]['MIN'], SENSORS[sens]['MAX'], SENSORS[sens]['LAST'], SENSORS[sens]['SENS_THRES'], SENSORS[sens]['CHNG_THRES'], sendval))
 
-    sense_delta = abs(v - SENSORS[sens]['LAST'])
-
-    if sense_delta > SENSORS[sens]['THRES']:
+    sense_delta = abs(val - SENSORS[sens]['LAST'])
+    if (DEBUG or PRC_DEBUG) and curname in SHOWLIST:
+        print("Sense_Delta: %s" % sense_delta)
+    if sense_delta >= SENSORS[sens]['SENS_THRES']:
         SENSORS[sens]['CHANGES'] += 1
-        if SENSORS[sens]['CHANGES'] > 5:
+        if SENSORS[sens]['CHANGES'] > SENSORS[sens]['CHNG_THRES']:
             if sendstr != "":
-                if curname in SHOWLIST:
-                    print ("******** %s - Sending this: %s " % (curname, sendstr))
-                if NETWORK:
-                    udp_sock.sendto(sendstr, (udp_ip, udp_port))
-                sendstr = ""
+                sendCmd(sendstr, curname)
+            sendstr = ""
     SENSORS[sens]['LAST'] = val
 
 if __name__ == "__main__":
