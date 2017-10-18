@@ -164,7 +164,8 @@ def handle_buttons(buttons):
     elif (buttons & cwiid.BTN_RIGHT):
         print("Right")
     elif (buttons & cwiid.BTN_1):
-        print("One")
+        if b_val == False:
+            procAction("F")
     elif (buttons & cwiid.BTN_2):
         print("Two")
     elif (buttons & cwiid.BTN_PLUS):
@@ -177,7 +178,7 @@ def handle_buttons(buttons):
         if b_val == False:
             procAction("U")
         elif b_val == True:
-            procAction("P")
+            procAction("D")
     elif (buttons & cwiid.BTN_HOME):
         # Home Calms Servos
         procAction("A")
@@ -207,10 +208,10 @@ def procAction(action):
     elif action == "O":
         sendCmd("A:O::", "Action")
         STATUS = "LIDUP"
-    elif action == "P":
+    elif action == "D":
         if STATUS.find("HANDUP") >= 0:
-            sendCmd("A:P::", "Action")
-            STATUS = "HANDDOWN"
+            sendCmd("A:D::", "Action")
+            STATUS = "HANDDOWNLIDUP"
     elif action == "C":
         if STATUS.find("HANDDOWN") < 0:
             procAction("P")
@@ -220,6 +221,8 @@ def procAction(action):
         sendCmd("A:A::", "Action")
     elif action == "L":
         sendCmd("A:L::", "Action")
+    elif action == "F":
+        sendCmd("A:F::", "Action")
     
 
 
