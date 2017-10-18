@@ -7,88 +7,164 @@ import socket
 import json
 from socket import error as socket_error
 
+
 # Initialise the PCA9685 using the default address (0x40).
 pwm = Adafruit_PCA9685.PCA9685(0x40)
 pwm.set_pwm_freq(60)
 
-SERVOS = []
+SRV_OPTIONS = []
+ACTIONS = {}
 
+STATUS = ""
+try:
+    chknet = sys.argv[1]
+    print("Chknet: %s" % chknet)
+    if int(chknet) == 1:
+        NETWORK = 0
+    else:
+        NETWORK = 1
+except:
+    NETWORK = 1
 
-DEBUG = True
-#Adding 25 to fingersto make hands close better
-# Adding 25 more to ring and pinky
-SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
-SERVOS.append({"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": True})
-SERVOS.append({"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 600, "INVERT": True})
-SERVOS.append({"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 600, "INVERT": True})
-SERVOS.append({"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 750, "INVERT": True})
-SERVOS.append({"DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": False})
-SERVOS.append({"DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660, "INVERT": False})
-SERVOS.append({"DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620, "INVERT": False})
+thingfile = "/home/pi/pimeup/thingbox/thing.json"
+thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 
+DEBUG = 0
+NET_DEBUG = 1
 
-
-#Original Values
-
-
-#SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
-#SERVOS.append({"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
-#SERVOS.append({"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575, "INVERT": True})
-#SERVOS.append({"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550, "INVERT": True})
-#SERVOS.append({"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
-#SERVOS.append({"DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": False})
-#SERVOS.append({"DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660, "INVERT": False})
-#SERVOS.append({"DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620, "INVERT": False})
-
-
-
+UDP_IP = '192.168.0.130'
+UDP_PORT = 30000
+UDP_BUFFER_SIZE = 5
 
 def main():
+    global SRV_OPTIONS
+    global ACTIONS
+    global STATUS
 
-    IP = '192.168.0.130'
-    PORT = 30000
-    BUFFER_SIZE = 5  # Normally 1024, but we want fast response
-    print("Listening on %s:%s" % (IP, PORT))
-#    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#    s.bind((IP, PORT))
-#    s.listen(1)
-#    # This Blocks!
-#    conn, addr = s.accept()
-#    straddr = str(addr[0]) + ":" + str(addr[1])
-#    print("Connection address: %s" % straddr)
+    SRV_OPTIONS = loadfile(thingfile)
+    ACTIONS = loadfile(thingactionfile)
 
-    sock = socket.socket(socket.AF_INET, # Internet
+    cur_finger = -1
+    ACT_SHORT = []
+    upact = ""
+    downact = ""
+    for x in ACTIONS:
+        if x['KEY'] == "U":
+            upact = x['ACTION']
+        if x['KEY'] == "P":
+            downact = x['ACTION']
+        ACT_SHORT.append(x['KEY'])
+
+    if NETWORK:
+        print("Listening on %s:%s" % (UDP_IP, UDP_PORT))
+        sock = socket.socket(socket.AF_INET, # Internet
                         socket.SOCK_DGRAM) # UDP
-    sock.bind((IP, PORT))
+        sock.bind((UDP_IP, UDP_PORT))
     try:
         while True:
-            data, addr = sock.recvfrom(BUFFER_SIZE)
+            if NETWORK:
+                data, addr = sock.recvfrom(UDP_BUFFER_SIZE)
+            else:
+                data = raw_input("Please Enter Raw Command: ")
             if not data:
                 continue
             else:
+                if DEBUG or NET_DEBUG:
+                    print("Recieved Data Update: %s" % data)
+
                 tdata = data.split(":")
-                if len(tdata) != 2:
+                if len(tdata) !=2 and len(tdata) != 4:
                     print("Ignoring Bad Data: %s" % data)
                     continue
                 else:
-                    servo_idx = int(tdata[0])
-                    servo_val = int(tdata[1])
-                    if servo_idx >= 0 and servo_idx < 8:
-                        if SERVOS[servo_idx]["INVERT"] == True:
-                            servo_val = abs(servo_val - 100)
-                        print("Recieved Data Update: %s" % data)
-                        setval = (servo_val * (SERVOS[servo_idx]['RANGE_MAX'] - SERVOS[servo_idx]['RANGE_MIN']) / 100) + SERVOS[servo_idx]['RANGE_MIN']
-                        print("Setting Servo: %s (%s) to %s" % (tdata[0], SERVOS[servo_idx]['DESC'], setval))
-                        pwm.set_pwm(servo_idx, 0, setval)
+                    cmdkey = tdata[0]
+                    cmdval = tdata[1]
+                    if str(cmdkey) == "A" and cmdval in ACT_SHORT:
+                        processAction(cmdval)
                     else:
-                        if DEBUG:
-                            print("Idx: %s - Val: %s" % (servo_idx, servo_val))
-
+                        try:
+                            cmdkey = int(cmdkey)
+                            cmdval = int(cmdval)
+                        except:
+                            print("cmdkey must be A or an integer")
+                            continue
+                        if cmdkey >= 0 and cmdkey < 7:
+                            if STATUS.find("HANDUP") >= 0:
+                                if SRV_OPTIONS[cmdkey]["INVERT"] == True:
+                                    cmdval = abs(cmdval - 100)
+                                setval = (cmdval * (SRV_OPTIONS[cmdkey]['RANGE_MAX'] - SRV_OPTIONS[cmdkey]['RANGE_MIN']) / 100) + SRV_OPTIONS[cmdkey]['RANGE_MIN']
+                                if DEBUG or NET_DEBUG:
+                                   print("Setting Servo: %s (%s) to %s" % (cmdkey, SRV_OPTIONS[cmdkey]['DESC'], setval))
+                                pwm.set_pwm(cmdkey, 0, setval)
+                            else:
+                                print("Will not preform commands due to STATUS: %s" % STATUS)
     except socket_error:
         exitGracefully()
     except KeyboardInterrupt:
         exitGracefully()
 
+def processAction(actKey):
+    global STATUS
+    act = {}
+    bfound = False
+    for x in ACTIONS:
+        if actKey == x['KEY']:
+            act = x
+            bfound = True
+    if bfound == True:
+        new_status = act['STATUS']
+        req_status = act['REQ_STATUS']
+        actStr = act['ACTION']
+        if req_status != "":
+            if STATUS.find(req_status) < 0:
+                print("Can't do it")
+                print("STATUS: %s" % STATUS)
+                print("req_status: %s" % req_status)
+                return
+        print("Running Action: %s" % act['NAME'])
+        for action in actStr.split(","):
+            tval = action.split(":")
+            act = tval[0]
+            val = tval[1]
+            if act == "P":
+                val = float(val)
+                time.sleep(val)
+            elif act == "A":
+                shutdown = False
+                try:
+                    val = int(val)
+                    if val == 0:
+                        shutdown = True
+                except:
+                    shutdown = False
+                if shutdown == True:
+                    for x in range(len(SRV_OPTIONS) - 1):
+                        pwm.set_pwm(x, 4096, 0)
+                else:
+                    processAction(val)
+            else:
+                act = int(act)
+                val = int(val)
+                if val >= 0:
+                    pwm.set_pwm(act, 0, val)
+                else:
+                    pwm.set_pwm(act, 4096, 0)
+        if new_status != "":
+            STATUS = new_status
+
+def loadfile(f):
+    o = open(f, "rb")
+    tj = o.read()
+    o.close()
+
+    pj = ""
+    for line in tj.split("\n"):
+        if line.strip() == "" or line.strip().find("#") == 0:
+            pass
+        else:
+            pj += line.strip() + "\n"
+    print(pj)
+    return json.loads(pj)
 
 def exitGracefully():
     print("")
@@ -101,7 +177,19 @@ def exitGracefully():
     pwm.set_pwm(5, 4096, 0)
     pwm.set_pwm(6, 4096, 0)
     pwm.set_pwm(7, 4096, 0)
+    pwm.set_pwm(8, 4096, 0)
     sys.exit(0)
+
+
+def setServoPulse(channel, pulse):
+  pulseLength = 1000000                   # 1,000,000 us per second
+  pulseLength /= 60                       # 60 Hz
+  print "%d us per period" % pulseLength
+  pulseLength /= 4096                     # 12 bits of resolution
+  print "%d us per bit" % pulseLength
+  pulse *= 1000
+  pulse /= pulseLength
+  pwm.set_pwm(channel, 0, pulse)
 
 if __name__ == "__main__":
     main()

@@ -106,6 +106,7 @@ def main():
     pwm.set_pwm(5, 4096, 0)
     pwm.set_pwm(6, 4096, 0)
     pwm.set_pwm(7, 4096, 0)
+    pwm.set_pwm(8, 4096, 0)
     sys.exit(0)
 
 
@@ -205,14 +206,6 @@ def setServoPulse(channel, pulse):
   pwm.set_pwm(channel, 0, pulse)
 
 
-#little low = 150
-#
-# Beak - 300 to 500
-# Channel 0
-# Eye Turns - 400 - 600
-# Channel 1
-# Eye Blink
-# Channel 2 300-500
 
 
 

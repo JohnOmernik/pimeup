@@ -4,7 +4,8 @@
 {"NAME": "pointforward", "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "F", "DESC": "Point forward", "ACTION": "0:275,1:560,2:560,3:540,4:300,P:0.2,5:300,P:0.2,1:300,P:0.2,1:400,P:0.2,1:300,P:0.2,1:400,P:0.2,A:U"},
 {"NAME": "allstop", "STATUS":"", "REQ_STATUS": "", "KEY": "A", "DESC": "Stop all servos", "ACTION": "A:0"},
 {"NAME": "lidup", "STATUS":"LIDUP", "REQ_STATUS": "", "KEY": "O", "DESC": "Opens the Lid", "ACTION": "8:600"},
-{"NAME": "liddown", "STATUS":"LIDDOWN", "REQ_STATUS": "HANDDOWN", "KEY": "C", "DESC": "Closesthe Lid", "ACTION": "8:350,P:0.5,8:320,P:0.5,8:250"}
+{"NAME": "liddown", "STATUS":"LIDDOWN", "REQ_STATUS": "HANDDOWN", "KEY": "C", "DESC": "Closesthe Lid", "ACTION": "8:350,P:0.5,8:320,P:0.5,8:250"},
+{"NAME": "lockwristup", "STATUS":"", "REQ_STATUS": "", "KEY": "L", "DESC": "Lock the wrist servo up - allstop will clear this", "ACTION": "7:380"}
 ]
 
 # {"NAME": "", "STATUS":"", "REQ_STATUS": "", "KEY": "", "DESC": "", "ACTION": ""}
