@@ -20,13 +20,16 @@ NET_DEBUG = 1
 NETWORK = 1
 
 SHOWLIST = [ "WristFlex", "WristTurn", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
-#SHOWLIST = [ "WristFlex", "WristTurn" ]
+#SHOWLIST = [ "Index", "Middle" ] 
 # Defaults:
-mysens_thres = 3
+mysens_thres = 2
 mychng_thres = 5
 # Used for Testing:
 tmpsens_thres = 2
-tmpchng_thres = 5
+tmpchng_thres = 10
+
+roundval = 2
+tmproundval = 3
 # Hardware SPI configuration: (Do not Modify)
 ####################
 SPI_PORT   = 0
@@ -37,13 +40,13 @@ mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
 
 STATUS = ""
 SENSORS = [
-    {"NAME": "Pinky", "TYPE": "adc", "REMOTE": 4, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
-    {"NAME": "Ring", "TYPE": "adc", "REMOTE": 3, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
-    {"NAME": "Middle", "TYPE": "adc", "REMOTE": 2, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
-    {"NAME": "Index", "TYPE": "adc", "REMOTE": 1, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
-    {"NAME": "Thumb", "TYPE": "adc", "REMOTE": 0, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False},
-    {"NAME": "WristFlex", "TYPE": "acc", "REMOTE": 5, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": tmpsens_thres, "CHNG_THRES": mychng_thres, "INVERT": True},
-    {"NAME": "WristTurn", "TYPE": "acc", "REMOTE": 6, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": tmpsens_thres, "CHNG_THRES": mychng_thres, "INVERT": False}
+    {"NAME": "Pinky", "TYPE": "adc", "REMOTE": 4, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
+    {"NAME": "Ring", "TYPE": "adc", "REMOTE": 3, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
+    {"NAME": "Middle", "TYPE": "adc", "REMOTE": 2, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
+    {"NAME": "Index", "TYPE": "adc", "REMOTE": 1, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
+    {"NAME": "Thumb", "TYPE": "adc", "REMOTE": 0, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
+    {"NAME": "WristFlex", "TYPE": "acc", "REMOTE": 5, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": True, "ROUNDVAL": roundval, "ADJVAL": 0},
+    {"NAME": "WristTurn", "TYPE": "acc", "REMOTE": 6, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 0}
 ]
 
 #SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
@@ -202,6 +205,18 @@ def sendCmd(sendstr, curname):
     if NETWORK:
         udp_sock.sendto(sendstr, (udp_ip, udp_port))
 
+def roundval(val, rnd):
+    modval = val % rnd
+    retval = 0
+    if modval != 0:
+        if float(modval) / float(rnd) >= 0.5:
+            retval = val + (rnd - modval)
+        else:
+            retval = val - modval
+    else:
+        retval = val
+    return retval
+
 def procAction(action):
     global SENSORS
     global b_val
@@ -247,13 +262,20 @@ def procValue(sens, val):
 
     if val > SENSORS[sens]['MAX']:
         SENSORS[sens]['MAX'] = val
+    else:
+        SENSORS[sens]['MAX'] = SENSORS[sens]['MAX'] - SENSORS[sens]['ADJVAL']
     if val < SENSORS[sens]['MIN']:
         SENSORS[sens]['MIN'] = val
+    else:
+        SENSORS[sens]['MIN'] = SENSORS[sens]['MIN'] + SENSORS[sens]['ADJVAL']
+    
     if SENSORS[sens]['MAX'] == SENSORS[sens]['MIN']:
         SENSORS[sens]['MAX'] += 1
 
     sendval = (float(val) - SENSORS[sens]['MIN']) / (SENSORS[sens]['MAX'] - SENSORS[sens]['MIN'])
     sendval = int(sendval * 100)
+    sendval = roundval(sendval, SENSORS[sens]['ROUNDVAL'])
+
     if SENSORS[sens]['INVERT'] == True:
         sendval = 100 - sendval
     if sendval < 10:
