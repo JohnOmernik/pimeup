@@ -14,13 +14,16 @@ pwm.set_pwm_freq(60)
 
 SRV_OPTIONS = []
 ACTIONS = {}
-
+HOMENET = 0
+NETWORK = 1
 STATUS = ""
 try:
     chknet = sys.argv[1]
     print("Chknet: %s" % chknet)
-    if int(chknet) == 1:
+    if int(chknet) == 2: # No network command line interface
         NETWORK = 0
+    elif int(chknet) == 1:  # Use home net ip of 192.168.0.130
+        HOMENET = 1
     else:
         NETWORK = 1
 except:
@@ -31,8 +34,10 @@ thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 STATUS_OPT = [ 'LIDUP', 'HANDUPLIDUP', 'HANDDOWNLIDUP', 'HANDDOWNLIDDOWN' ]
 DEBUG = 0
 NET_DEBUG = 1
-
-UDP_IP = '192.168.1.110'
+if HOMENET == 1:
+    UDP_IP = '192.168.0.130'
+else:
+    UDP_IP = '192.168.1.110'
 UDP_PORT = 30000
 UDP_BUFFER_SIZE = 5
 
