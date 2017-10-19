@@ -32,7 +32,7 @@ except:
 if HOMENET == 1:
     UDP_IP = '192.168.0.130'
 else:
-    UDP_IP = '192.168.1.111'
+    UDP_IP = '192.168.1.110'
 
 UDP_PORT = 30000
 UDP_SOCK = None
