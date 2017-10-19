@@ -28,7 +28,7 @@ except:
 
 thingfile = "/home/pi/pimeup/thingbox/thing.json"
 thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
-
+STATUS_OPT = [ 'LIDUP', 'HANDUPLIDUP', 'HANDDOWNLIDUP', 'HANDDOWNLIDDOWN' ]
 DEBUG = 0
 NET_DEBUG = 1
 
@@ -81,6 +81,11 @@ def main():
                     cmdval = tdata[1]
                     if str(cmdkey) == "A" and cmdval in ACT_SHORT:
                         processAction(cmdval)
+                    elif str(cmdkey) == "S" and cmdval != "":
+                        if cmdval in STATUS_OPT:
+                            STATUS = cmdval
+                        else:
+                            print("Status needs to be in %s" % STATUS_OPT)
                     else:
                         try:
                             cmdkey = int(cmdkey)
@@ -88,20 +93,27 @@ def main():
                         except:
                             print("cmdkey must be A or an integer")
                             continue
-                        if cmdkey >= 0 and cmdkey < 7:
-                            if STATUS.find("HANDUP") >= 0:
-                                if SRV_OPTIONS[cmdkey]["INVERT"] == True:
-                                    cmdval = abs(cmdval - 100)
-                                setval = (cmdval * (SRV_OPTIONS[cmdkey]['RANGE_MAX'] - SRV_OPTIONS[cmdkey]['RANGE_MIN']) / 100) + SRV_OPTIONS[cmdkey]['RANGE_MIN']
-                                if DEBUG or NET_DEBUG:
-                                   print("Setting Servo: %s (%s) to %s" % (cmdkey, SRV_OPTIONS[cmdkey]['DESC'], setval))
-                                pwm.set_pwm(cmdkey, 0, setval)
-                            else:
-                                print("Will not preform commands due to STATUS: %s" % STATUS)
+                        setfingerperc(cmdkey, cmdval)
     except socket_error:
         exitGracefully()
     except KeyboardInterrupt:
         exitGracefully()
+
+
+def setfingerperc(cmdkey, cmdorigval, ignorestatus=False):
+    global SRV_OPTIONS
+    global STATUS
+    if STATUS.find("HANDUP") >= 0 or ignorestatus:
+        if SRV_OPTIONS[cmdkey]["INVERT"] == True:
+            cmdval = abs(cmdorigval - 100)
+        else:
+            cmdval = cmdorigval
+        setval = (cmdval * (SRV_OPTIONS[cmdkey]['RANGE_MAX'] - SRV_OPTIONS[cmdkey]['RANGE_MIN']) / 100) + SRV_OPTIONS[cmdkey]['RANGE_MIN']
+        if DEBUG or NET_DEBUG:
+            print("Setting Servo: %s (%s) to %s percent - (%s)" % (cmdkey, SRV_OPTIONS[cmdkey]['DESC'], cmdorigval, setval))
+        pwm.set_pwm(cmdkey, 0, setval)
+    else:
+        print("Will not preform commands due to STATUS: %s" % STATUS)
 
 def processAction(actKey):
     global STATUS
@@ -145,10 +157,7 @@ def processAction(actKey):
             else:
                 act = int(act)
                 val = int(val)
-                if val >= 0:
-                    pwm.set_pwm(act, 0, val)
-                else:
-                    pwm.set_pwm(act, 4096, 0)
+                setfingerperc(act, val, True)
         if new_status != "":
             STATUS = new_status
 

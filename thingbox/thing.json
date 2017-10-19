@@ -1,12 +1,12 @@
 [
-{"IDX": 0, "DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": 0, "NOTES": "275 is in, 575 is out"},
-{"IDX": 1, "DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 560, "INVERT": 1, "NOTES": "300 is up, 560 is down"},
+{"IDX": 0, "DESC":"Thumb", "RANGE_MIN": 390, "RANGE_MAX": 705, "INVERT": 1, "NOTES": "390 is out, 575 is in"},
+{"IDX": 1, "DESC":"Pointer", "RANGE_MIN": 350, "RANGE_MAX": 620, "INVERT": 1, "NOTES": "300 is up, 620 is down"},
 {"IDX": 2, "DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 560, "INVERT": 1, "NOTES": "325 is up, 560 is down"},
 {"IDX": 3, "DESC":"Ring", "RANGE_MIN":  300, "RANGE_MAX": 540, "INVERT": 1, "NOTES": "300 is up, 540 is down"},
-{"IDX": 4, "DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 740, "INVERT": 0, "NOTES": "300 is down, 740 is up"},
+{"IDX": 4, "DESC":"Pinky", "RANGE_MIN": 340, "RANGE_MAX": 575, "INVERT": 0, "NOTES": "340 is down, 575 is up"},
 {"IDX": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 500, "INVERT": 0, "NOTES": "600 is a bit bent back, 500 is straight up, 300 is forward"},
 {"IDX": 6, "DESC":"WristTurn", "RANGE_MIN": 250, "RANGE_MAX": 550, "INVERT": 0, "NOTES": "250 is back facing right, 400 facing forward, 550 facing right"},
-{"IDX": 7, "DESC":"WristUp", "RANGE_MIN": 330, "RANGE_MAX" : 600, "INVERT": 0, "NOTES": "330 is past staight a bit, 380 is straight up,  600 is laying down"},
+{"IDX": 7, "DESC":"WristUp", "RANGE_MIN": 330, "RANGE_MAX" : 600, "INVERT": 1, "NOTES": "330 is past staight a bit, 380 is straight up,  600 is laying down"},
 {"IDX": 8, "DESC":"Lid", "RANGE_MIN": 240, "RANGE_MAX" : 600, "INVERT": 0, "NOTES": "240 Lid closed, 600 lid open"}
 ]
 
