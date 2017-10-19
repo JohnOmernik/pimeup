@@ -38,6 +38,7 @@ if HOMENET == 1:
     UDP_IP = '192.168.0.130'
 else:
     UDP_IP = '192.168.1.110'
+print("UDP IP is %s" % UDP_IP)
 UDP_PORT = 30000
 UDP_BUFFER_SIZE = 5
 
