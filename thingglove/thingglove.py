@@ -6,9 +6,6 @@ import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 import cwiid
 
-udp_ip = '192.168.1.110'
-udp_port = 30000
-udp_sock = None
 
 tdelay = 0.2
 DEBUG = 0
@@ -18,6 +15,31 @@ FLX_DEBUG = 0
 PRC_DEBUG = 0
 NET_DEBUG = 1
 NETWORK = 1
+HOMENET = 0
+try:
+    chknet = sys.argv[1]
+    print("Chknet: %s" % chknet)
+    if int(chknet) == 2: # No network command line interface
+        NETWORK = 0
+    elif int(chknet) == 1:  # Use home net ip of 192.168.0.130
+        HOMENET = 1
+    else:
+        NETWORK = 1
+except:
+    NETWORK = 1
+
+
+if HOMENET == 1:
+    UDP_IP = '192.168.0.130'
+else:
+    UDP_IP = '192.168.1.111'
+
+UDP_PORT = 30000
+UDP_SOCK = None
+
+
+
+
 
 SHOWLIST = [ "WristFlex", "WristTurn", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
 #SHOWLIST = [ "Index", "Middle" ] 
@@ -45,8 +67,8 @@ SENSORS = [
     {"NAME": "Middle", "TYPE": "adc", "REMOTE": 2, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
     {"NAME": "Index", "TYPE": "adc", "REMOTE": 1, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
     {"NAME": "Thumb", "TYPE": "adc", "REMOTE": 0, "MIN":1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 4},
-    {"NAME": "WristFlex", "TYPE": "acc", "REMOTE": 5, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": True, "ROUNDVAL": roundval, "ADJVAL": 0},
-    {"NAME": "WristTurn", "TYPE": "acc", "REMOTE": 6, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": mysens_thres, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 0}
+    {"NAME": "WristFlex", "TYPE": "acc", "REMOTE": 5, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": 3, "CHNG_THRES": mychng_thres, "INVERT": True, "ROUNDVAL": roundval, "ADJVAL": 0},
+    {"NAME": "WristTurn", "TYPE": "acc", "REMOTE": 6, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": 3, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 0}
 ]
 
 #SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
@@ -63,7 +85,6 @@ wiimote = None
 connected = False
 rumble = 0
 b_val = False
-udp_socket = None
 def main():
     global wiimote
     global rpt_mode
@@ -71,12 +92,12 @@ def main():
     global rumble
     global NETWORK
     global b_val
-    global udp_sock
+    global UDP_SOCK
     global STATUS
 
 # Setup Network (Currently UDP)
     if NETWORK == 1:
-        udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        UDP_SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 
 # Setup Wii remote
     print ("Press 1+2 to connect Wii")
@@ -195,7 +216,7 @@ def handle_buttons(buttons):
         procAction("A")
 
 def sendCmd(sendstr, curname):
-    global udp_sock
+    global UDP_SOCK
     if len(sendstr) != 5:
         print("*WARNING CMD SHOULD BE only 5 characters!")
 
@@ -203,7 +224,7 @@ def sendCmd(sendstr, curname):
         if curname in SHOWLIST or sendstr.find("A") == 0:
             print ("******** %s Sending this: %s " % (curname, sendstr))
     if NETWORK:
-        udp_sock.sendto(sendstr, (udp_ip, udp_port))
+        UDP_SOCK.sendto(sendstr, (UDP_IP, UDP_PORT))
 
 def roundval(val, rnd):
     modval = val % rnd
@@ -220,7 +241,7 @@ def roundval(val, rnd):
 def procAction(action):
     global SENSORS
     global b_val
-    global udp_sock
+    global UDP_SOCK
     global STATUS
 
     if action == "U":
@@ -253,7 +274,7 @@ def procAction(action):
 def procValue(sens, val):
     global SENSORS
     global b_val
-    global udp_sock
+    global UDP_SOCK
     global STATUS
 
     curname = SENSORS[sens]['NAME']
@@ -262,12 +283,8 @@ def procValue(sens, val):
 
     if val > SENSORS[sens]['MAX']:
         SENSORS[sens]['MAX'] = val
-    else:
-        SENSORS[sens]['MAX'] = SENSORS[sens]['MAX'] - SENSORS[sens]['ADJVAL']
     if val < SENSORS[sens]['MIN']:
         SENSORS[sens]['MIN'] = val
-    else:
-        SENSORS[sens]['MIN'] = SENSORS[sens]['MIN'] + SENSORS[sens]['ADJVAL']
     
     if SENSORS[sens]['MAX'] == SENSORS[sens]['MIN']:
         SENSORS[sens]['MAX'] += 1
@@ -293,8 +310,21 @@ def procValue(sens, val):
     if (DEBUG or PRC_DEBUG) and curname in SHOWLIST:
         print("Sense_Delta: %s" % sense_delta)
     if sense_delta >= SENSORS[sens]['SENS_THRES']:
+
         SENSORS[sens]['CHANGES'] += 1
         if SENSORS[sens]['CHANGES'] > SENSORS[sens]['CHNG_THRES']:
+            if val > SENSORS[sens]['MAX']:
+                SENSORS[sens]['MAX'] = val
+            else:
+                SENSORS[sens]['MAX'] = SENSORS[sens]['MAX'] - SENSORS[sens]['ADJVAL']
+            if val < SENSORS[sens]['MIN']:
+                SENSORS[sens]['MIN'] = val
+            else:
+                SENSORS[sens]['MIN'] = SENSORS[sens]['MIN'] + SENSORS[sens]['ADJVAL']
+            if SENSORS[sens]['MAX'] == SENSORS[sens]['MIN']:
+                SENSORS[sens]['MAX'] += 1
+
+
             if sendstr != "":
                 sendCmd(sendstr, curname)
             sendstr = ""
