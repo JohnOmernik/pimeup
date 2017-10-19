@@ -4,7 +4,7 @@
 {"NAME": "pointforward", "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "F", "DESC": "Point forward", "ACTION": "0:0,P:0.1,1:0,P:0.2,2:0,P:0.2,3:0,P:0.1,4:0,P:0.2,5:0,P:0.2,1:100,P:0.2,1:50,P:0.2,1:100,P:0.2,1:50,P:0.2,A:U"},
 {"NAME": "allstop", "STATUS":"", "REQ_STATUS": "", "KEY": "A", "DESC": "Stop all servos", "ACTION": "A:0"},
 {"NAME": "lidup", "STATUS":"LIDUP", "REQ_STATUS": "", "KEY": "O", "DESC": "Opens the Lid", "ACTION": "8:50,P:0.2,8:60,P:0.2,8:70,P:0.2,8:80,P:0.2,8:90,P:0.2,8:100"},
-{"NAME": "liddown", "STATUS":"LIDDOWN", "REQ_STATUS": "LIDUP", "KEY": "C", "DESC": "Closesthe Lid", "ACTION": "8:50,P:0.2,8:40,P:0.2,8:30,P:0.2,8:20,P:0.2,8:10,P:0.2,8:0"},
+{"NAME": "liddown", "STATUS":"LIDDOWN", "REQ_STATUS": "LIDUP", "KEY": "C", "DESC": "Closesthe Lid", "ACTION": "8:90,P:0.1,8:80,P:0.1,8:70,P:0.1,8:60,P:0.1,8:50,P:0.2,8:40,P:0.2,8:30,P:0.2,8:20,P:0.2,8:10,P:0.2,8:0"},
 {"NAME": "lockwristup", "STATUS":"", "REQ_STATUS": "", "KEY": "L", "DESC": "Lock the wrist servo up - allstop will clear this", "ACTION": "7:85"}
 ]
 
