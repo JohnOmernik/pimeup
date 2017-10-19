@@ -6,7 +6,7 @@ import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 import cwiid
 
-udp_ip = '192.168.43.229'
+udp_ip = '192.168.1.110'
 udp_port = 30000
 udp_sock = None
 
