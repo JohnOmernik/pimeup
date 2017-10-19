@@ -6,7 +6,7 @@ import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 import cwiid
 
-udp_ip = '192.168.0.130'
+udp_ip = '192.168.43.229'
 udp_port = 30000
 udp_sock = None
 
@@ -143,6 +143,7 @@ def callback(mesg_list, time):
 def handle_buttons(buttons):
     global b_val
     global status
+    global SENSORS
 
     # The B (trigger) Button does cool things for us
     # When pressed that allows the glove sensors to be read and sent
@@ -169,7 +170,14 @@ def handle_buttons(buttons):
     elif (buttons & cwiid.BTN_2):
         print("Two")
     elif (buttons & cwiid.BTN_PLUS):
-        print("Plus")
+        if b_val == False:
+            print("Resetting Max")
+            for z in SENSORS:
+                z['MAX'] = 0
+        else:
+            print("Resetting Min")
+            for z in SENSORS:
+                z['MIN'] = 1000
     elif (buttons & cwiid.BTN_MINUS):
         # Locks the wrist up
         procAction("L")
