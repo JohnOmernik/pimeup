@@ -63,7 +63,7 @@ def main():
         curblob = random.choice(soundblobs)
         curtime = int(time.time())
         if curtime - lasthb > hbinterval:
-            logevent("heartbeat", "Working", "Cur Childhood sound file: %s" % curfile)
+            logevent("heartbeat", "Working", "Childhood room up and running")
             lasthb = curtime
 #        curstream = open(curfile, "rb")
         data = curblob[0:size]
