@@ -31,7 +31,7 @@ numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
-sounddelay = 0.001
+sounddelay = 0.01
 lightdelay = 0.2
 
 # Here's how to control the strip from any two GPIO pins:
