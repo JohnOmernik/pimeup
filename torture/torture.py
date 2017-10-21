@@ -31,6 +31,9 @@ numpixels = 120 # Number of LEDs in strip
 lasthb = 0
 hbinterval = 30
 
+sounddelay = 0.001
+lightdelay = 0.2
+
 # Here's how to control the strip from any two GPIO pins:
 datapin   = 23
 clockpin  = 24
@@ -145,7 +148,7 @@ def PlaySound():
         while data:
             out_stream.write(data)
             data = memsound[curfile].read(size)
-            gevent.sleep(0.01)
+            gevent.sleep(sounddelay)
 
 
 def sendlog(log, debug):
@@ -186,7 +189,7 @@ def FirePlace():
                     if random.randint(0, 255) < COOLING:
                         tval = heat[i] - random.randint(0, ((COOLING * 10) / numpixels) + 2)
                         heat[i] = tval
-                gevent.sleep(0.01)
+                gevent.sleep(lightdelay)
 
     # This is supposed to be a diffusing effect I think
                 k = numpixels -3
@@ -195,7 +198,7 @@ def FirePlace():
                         tval = (heat[k-1] + heat[ k- 2 ] + heat[ k- 2] ) / 3
                         heat[k] = tval
                         k = k - 1
-                gevent.sleep(0.01)
+                gevent.sleep(lightdelay)
 
     # Now let's see if we set any sparks!
                 if gsparkitup == True:
@@ -214,9 +217,9 @@ def FirePlace():
                     newcolor = int((heat[j] * len(allcolors)) / 256)
                     strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
                 strip.show()
-                gevent.sleep(0.01)
+                gevent.sleep(lightdelay)
             else:
-                gevent.sleep(0.01)
+                gevent.sleep(lightdelay)
     except KeyboardInterrupt:
         print("")
         print("exiting and shutting down strip")
