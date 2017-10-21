@@ -27,6 +27,8 @@ stats = {}
 
 def reloaddisplay():
     global displaylogs
+
+
     for filename in os.listdir(logdir):
 
 
@@ -93,6 +95,14 @@ def gatherstats():
 def showlogs():
     global logrefresh
     global lastrefresh
+    global logdir
+    global curday
+    curtime = int(time.time())
+    tday = time.strftime('%Y-%m-%d', time.localtime(curtime))
+    if tday != curday:
+        curday = tday
+        logdir = "/home/pi/pimeup/hauntlogs/logs/" + curday
+
 
     curtime = int(time.time())
     if curtime - lastrefresh >= logrefresh:
@@ -106,6 +116,13 @@ def showlogs():
 def showstats():
     global logrefresh
     global lastrefresh
+    global logdir
+    global curday
+    curtime = int(time.time())
+    tday = time.strftime('%Y-%m-%d', time.localtime(curtime))
+    if tday != curday:
+        curday = tday
+        logdir = "/home/pi/pimeup/hauntlogs/logs/" + curday
 
     curtime = int(time.time())
     if curtime - lastrefresh >= logrefresh:
