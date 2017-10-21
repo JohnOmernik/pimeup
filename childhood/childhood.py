@@ -71,7 +71,8 @@ def main():
 #        data = curstream.read(size)
         while data:
             out_stream.write(data)
-            data = curblob[cupos:size]
+            data = curblob[curpos:size]
+            curpos = curpos + size
             #curstream.read(size)
             if len(data) == size:
                 pass
