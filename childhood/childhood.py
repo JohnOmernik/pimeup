@@ -42,20 +42,48 @@ def main():
 
 
     soundfiles = ['/home/pi/spencer_young.wav', '/home/pi/spencer2.wav', '/home/pi/spencer3.wav']
+    soundblobs = []
+    for sf in soundfiles:
+        f = open(sf, 'rb')
+        u = f.read()
+        f.close()
+        soundblobs.append(u)
+        u = None
+
 
     while True:
-        curfile = random.choice(soundfiles)
+        out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
+        out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+        out_stream.setchannels(channels)
+        out_stream.setrate(rate)
+        out_stream.setperiodsize(size)
+
+
+        #curfile = random.choice(soundfiles)
+        curblob = random.choice(soundblobs)
         curtime = int(time.time())
         if curtime - lasthb > hbinterval:
             logevent("heartbeat", "Working", "Cur Childhood sound file: %s" % curfile)
             lasthb = curtime
-        curstream = open(curfile, "rb")
-        data = curstream.read(size)
+#        curstream = open(curfile, "rb")
+        data = curblob[0:size]
+        curpos = size
+#        data = curstream.read(size)
         while data:
             out_stream.write(data)
-            data = curstream.read(size)
-        curstream.close()
-
+            data = curblob[cupos:size]
+            #curstream.read(size)
+            if len(data) == size:
+                pass
+            else:
+                out_stream.write(data)
+                data = 0
+#        curstream.close()
+        try:
+            outstream.close()
+            outstream = None
+        except:
+            outstream = None
     sys.exit(0)
 
 def logevent(etype, edata, edesc):
