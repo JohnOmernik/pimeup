@@ -9,6 +9,7 @@ import requests
 import datetime
 import gevent
 import atexit
+import cStringIO
 from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
@@ -89,10 +90,10 @@ def main():
         for y in colors_dict[x]:
             allcolors.append(y)
 
-#        gevent.spawn(PlaySound),
 
     gevent.joinall([
         gevent.spawn(FirePlace),
+        gevent.spawn(PlaySound),
     ])
 
 
@@ -126,22 +127,26 @@ def PlaySound():
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
     soundfiles = ['/home/pi/torture_audio.wav']
-    curstream = None
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
     while True:
-        curtime = int(time.time())
-        if curtime - lasthb > hbinterval:
-            logevent("heartbeat", "Working", "Standard HB")
-            lasthb = curtime
+#        curtime = int(time.time())
+#        if curtime - lasthb > hbinterval:
+#            logevent("heartbeat", "Working", "Standard HB")
+#            lasthb = curtime
         curfile = random.choice(soundfiles)
-        curstream = open(curfile, "rb")
-        gevent.sleep(0.01)
-        if curstream is not None:
-            data = curstream.read(size)
-            while data:
-                out_stream.write(data)
-                data = curstream.read(size)
-                gevent.sleep(0.001)
-            curstream.close()
+        gevent.sleep(0.001)
+        memsound[curfile].seek(0)
+        data = memsound[curfile].read(size)
+        while data:
+            out_stream.write(data)
+            data = memsound[curfile].read(size)
+            gevent.sleep(0.001)
 
 
 def sendlog(log, debug):
