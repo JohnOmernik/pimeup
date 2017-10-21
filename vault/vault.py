@@ -12,7 +12,7 @@ from collections import OrderedDict
 import random
 from dotstar import Adafruit_DotStar
 import socket
-
+import cStringIO
 import alsaaudio
 import wave
 import struct

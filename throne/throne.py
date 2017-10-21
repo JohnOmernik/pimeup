@@ -7,6 +7,7 @@ import cwiid
 import json
 import gevent
 from collections import OrderedDict
+import cStringIO
 import alsaaudio
 import wave
 import requests
