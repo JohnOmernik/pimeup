@@ -2,6 +2,7 @@
 import cwiid
 import sys
 import gevent
+import cStringIO
 import time
 import json
 import datetime
@@ -154,7 +155,15 @@ def PlaySound():
     channels = 2
     rate = 44100
     size = 1024
-    thunderfiles = ['/home/pi/father_zaps.wav']
+    soundfiles = ['/home/pi/father_zaps.wav']
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
+
     out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
     out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
     out_stream.setchannels(channels)
@@ -163,6 +172,7 @@ def PlaySound():
     curstream = None
     blackon = False
     lightwhite = False
+    soundreset = False
     while True:
         if lightson == True and playsound == False and blacklight == False:
             if lightwhite == False:
@@ -181,16 +191,15 @@ def PlaySound():
             blackon = False
             print("Zapping")
             while playsound == True:
-                if curstream is None:
+                if soundreset == False:
                     curfile = random.choice(thunderfiles)
-                    curstream = open(curfile, "rb")
-                data = curstream.read(size)
-                tstart = 0
+                    memsound[curfile].seek(0)
+                    soundreset = True
+                data = memsound[curfile].read(size)
                 gevent.sleep(0.01)
                 while data and playsound == True:
-                    tstart += 1
                     out_stream.write(data)
-                    data = curstream.read(size)
+                    data = memsound[curfile].read(size)
                     rmsval = rms(data)
                     sounds.append(rmsval)
                     ug = sounds.pop(0)
@@ -198,7 +207,6 @@ def PlaySound():
                         sounds_avg = sum(sounds) / len(sounds)
                     except:
                         sounds_avg = 0
-#            print(sounds_avg)
                     if sounds_avg > hi_thres:
                         strip.setBrightness(flashBright)
                         setAllLEDS(strip, [flashColor])
@@ -206,17 +214,9 @@ def PlaySound():
                         strip.setBrightness(defaultBright)
                         setAllLEDS(strip, [defaultColor])
                     gevent.sleep(0.01)
-                try:
-                    curstream.close()
-                except:
-                    pass
-                curstream = None
+                soundreset = False
             if playsound == False:
-                try:
-                    curstream.close()
-                except:
-                    pass
-                curstream = None
+                soundreset = False
         elif lightson == False and playsound == False and blacklight == True:
             if blackon == False:
                 blackon = True
