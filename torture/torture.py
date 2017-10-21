@@ -140,13 +140,12 @@ def PlaySound():
 #            logevent("heartbeat", "Working", "Standard HB")
 #            lasthb = curtime
         curfile = random.choice(soundfiles)
-        gevent.sleep(0.001)
         memsound[curfile].seek(0)
         data = memsound[curfile].read(size)
         while data:
             out_stream.write(data)
             data = memsound[curfile].read(size)
-            gevent.sleep(0.001)
+            gevent.sleep(0.01)
 
 
 def sendlog(log, debug):
@@ -187,7 +186,7 @@ def FirePlace():
                     if random.randint(0, 255) < COOLING:
                         tval = heat[i] - random.randint(0, ((COOLING * 10) / numpixels) + 2)
                         heat[i] = tval
-                gevent.sleep(0.1)
+                gevent.sleep(0.01)
 
     # This is supposed to be a diffusing effect I think
                 k = numpixels -3
@@ -196,7 +195,7 @@ def FirePlace():
                         tval = (heat[k-1] + heat[ k- 2 ] + heat[ k- 2] ) / 3
                         heat[k] = tval
                         k = k - 1
-                gevent.sleep(0.1)
+                gevent.sleep(0.01)
 
     # Now let's see if we set any sparks!
                 if gsparkitup == True:
@@ -215,9 +214,9 @@ def FirePlace():
                     newcolor = int((heat[j] * len(allcolors)) / 256)
                     strip.setPixelColor(j, int(allcolors[newcolor].replace("#", ''), 16))
                 strip.show()
-                gevent.sleep(0.1)
+                gevent.sleep(0.01)
             else:
-                gevent.sleep(0.1)
+                gevent.sleep(0.01)
     except KeyboardInterrupt:
         print("")
         print("exiting and shutting down strip")
