@@ -211,40 +211,38 @@ def PlaySound():
     channels = 2
     rate = 44100
     size = 1024
-    thunderfiles = ['/home/pi/Madness_Vault_Whispers.wav']
+    soundfiles = ['/home/pi/Madness_Vault_Whispers.wav']
     out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
     out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
     out_stream.setchannels(channels)
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
-    curstream = None
+
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
+
+    soundreset = False
+
     while True:
-        if  playsound == True:
+        if playsound == True:
             print("Sound")
-            while playsound == True:
-                if curstream is None:
-                    curfile = random.choice(thunderfiles)
-                    curstream = open(curfile, "rb")
-                data = curstream.read(size)
-                tstart = 0
+            if soundreset == False:
+                curfile = random.choice(soundfiles)
+                memsound[curfile].seek(0)
+                soundreset = True
+            data = memsound[curfile].read(size)
+            gevent.sleep(0.001)
+            while data and playsound == True:
+                out_stream.write(data)
+                data = memsound[curfile].read(size)
                 gevent.sleep(0.001)
-                while data and playsound == True:
-                    tstart += 1
-                    out_stream.write(data)
-                    data = curstream.read(size)
-                    gevent.sleep(0.001)
-                try:
-                    curstream.close()
-                except:
-                    pass
-                curstream = None
-                playsound = False
-            if playsound == False:
-                try:
-                    curstream.close()
-                except:
-                    pass
-                curstream = None
+            playsound = False
+            soundreset = False
         else:
             gevent.sleep(0.001)
 
