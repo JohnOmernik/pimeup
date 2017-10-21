@@ -192,7 +192,7 @@ def PlaySound():
             print("Zapping")
             while playsound == True:
                 if soundreset == False:
-                    curfile = random.choice(thunderfiles)
+                    curfile = random.choice(soundfiles)
                     memsound[curfile].seek(0)
                     soundreset = True
                 data = memsound[curfile].read(size)
