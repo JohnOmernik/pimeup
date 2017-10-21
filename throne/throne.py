@@ -195,28 +195,30 @@ def playSound():
     out_stream.setrate(rate)
     out_stream.setperiodsize(size)
 
-
+    soundreset = False
     soundfiles = ['/home/pi/tool_mantra.wav']
-    curstream = None
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
     while True:
         if soundstart == True:
-            if curstream is not None:
-                curstream.close()
-            curfile = random.choice(soundfiles)
-            curstream = open(curfile, "rb")
-            tstart = 0
+            if soundreset == False:
+                curfile = random.choice(soundfiles)
+                memsound[curfile].seek(0)
+                soundreset = True
             soundstart = False
             soundplaying = True
             fireplacestart = True
-        if curstream is not None:
-            data = curstream.read(size)
+            data = memsound[curfile].read(size)
             while data:
-                tstart += 1
                 out_stream.write(data)
-                data = curstream.read(size)
+                data = memsound[curfile].read(size)
                 gevent.sleep(0.001)
-            curstream.close()
-            curstream = None
+            soundreset = False
             soundplaying = False
         else:
             soundplaying = False
