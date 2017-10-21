@@ -6,6 +6,7 @@ import alsaaudio
 import json
 import requests
 import os
+import cStringIO
 import socket
 from collections import OrderedDict
 
@@ -42,6 +43,13 @@ def main():
 
 
     soundfiles = ['/home/pi/spencer_young.wav', '/home/pi/spencer2.wav', '/home/pi/spencer3.wav']
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
 
     while True:
         curfile = random.choice(soundfiles)
@@ -49,12 +57,12 @@ def main():
         if curtime - lasthb > hbinterval:
             logevent("heartbeat", "Working", "Cur Childhood sound file: %s" % curfile)
             lasthb = curtime
-        curstream = open(curfile, "rb")
-        data = curstream.read(size)
+        print("Playing %s frm memory" % curfile)
+        memsound[curfile].seek(0)
+        data = memsound[curfile].read(size)
         while data:
             out_stream.write(data)
-            data = curstream.read(size)
-        curstream.close()
+            data = memsound[curfile].read(size)
 
     sys.exit(0)
 
