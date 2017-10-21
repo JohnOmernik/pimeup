@@ -47,11 +47,10 @@ def main():
     # First run git pull
     runcmd([gitpull])
     while True:
-        time.sleep(10)
         curtime = int(time.time())
+        # Check this every X secods to see if there are updates from the API server
         if curtime - lastchktime >= chktime:
             if myroom != "init":
-                # Get Wii remote update
                 logevent("bspimeup", myroom, "Heartbeat and conf check for %s" % myroom)
             # Get current config
             oldconf = curconf
@@ -133,8 +132,8 @@ def main():
 
             # Update the last check time
                 lastchktime = curtime
-                time.sleep(5)
-
+        # No go to sleep so we don't burn out the processor looping
+        time.sleep(10)
 def fsckreboot():
     logevent("shutdown", "fsckreboot", "Shutting down with -rF (halt and run fsck) being issued now")
     runcmd(['sudo', 'touch', '/forcefsck'])
