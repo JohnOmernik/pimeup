@@ -34,11 +34,11 @@ def main():
     rate = 44100
     size = 1024
 
-#    out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
-#    out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-#    out_stream.setchannels(channels)
-#    out_stream.setrate(rate)
-#    out_stream.setperiodsize(size)
+    out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
+    out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+    out_stream.setchannels(channels)
+    out_stream.setrate(rate)
+    out_stream.setperiodsize(size)
 
 
     soundfiles = ['/home/pi/spencer_young.wav', '/home/pi/spencer2.wav', '/home/pi/spencer3.wav']
@@ -52,11 +52,11 @@ def main():
 
 
     while True:
-        out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
-        out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
-        out_stream.setchannels(channels)
-        out_stream.setrate(rate)
-        out_stream.setperiodsize(size)
+#        out_stream = alsaaudio.PCM(alsaaudio.PCM_PLAYBACK, alsaaudio.PCM_NORMAL, 'default')
+#        out_stream.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+#        out_stream.setchannels(channels)
+#        out_stream.setrate(rate)
+#        out_stream.setperiodsize(size)
 
 
         #curfile = random.choice(soundfiles)
