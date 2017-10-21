@@ -7,6 +7,7 @@ import wave
 import struct
 import json
 import socket
+import cStringIO
 import requests
 import os
 from collections import OrderedDict
@@ -66,6 +67,16 @@ def main():
     out_stream.setperiodsize(size)
 
     soundfiles = ['/home/pi/heartbeat.wav']
+
+    soundfiles = ['/home/pi/spencer_young.wav', '/home/pi/spencer2.wav', '/home/pi/spencer3.wav']
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
+
     while True:
         curtime = int(time.time())
         if curtime - lasthb > hbinterval:
@@ -73,11 +84,11 @@ def main():
             lasthb = curtime
 
         curfile = random.choice(soundfiles)
-        curstream = open(curfile, "rb")
-        data = curstream.read(size)
+        memsound[curfile].seek(0)
+        data = memsound[curfile].read(size)
         while data:
             out_stream.write(data)
-            data = curstream.read(size)
+            data = memsound[curfile].read(size)
             rmsval = rms(data)
             sounds.append(rmsval)
             ug = sounds.pop(0)
@@ -93,7 +104,7 @@ def main():
                 strip.setBrightness(defaultBright)
                 setAllLEDS(strip, [defaultColor])
                 beat = False
-        curstream.close()
+#        curstream.close()
 
 
 
