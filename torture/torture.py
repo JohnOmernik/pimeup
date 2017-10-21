@@ -39,8 +39,8 @@ strip     = Adafruit_DotStar(numpixels, datapin, clockpin)
 strip.setBrightness(defaultBright)
 strip.begin()           # Initialize pins for output
 
-hi_thres = 10
-low_thres = 5
+hi_thres = 50
+low_thres = 40
 beat = False
 
 def main():
