@@ -47,6 +47,7 @@ def main():
     # First run git pull
     runcmd([gitpull])
     while True:
+        time.sleep(10)
         curtime = int(time.time())
         if curtime - lastchktime >= chktime:
             if myroom != "init":
