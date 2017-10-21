@@ -47,17 +47,15 @@ def main():
         curfile = random.choice(soundfiles)
         curtime = int(time.time())
         if curtime - lasthb > hbinterval:
-            logevent("heartbeat", "Working", "Childhood room up and running")
+            logevent("heartbeat", "Working", "Cur Childhood sound file: %s" % curfile)
             lasthb = curtime
-        print("Opening %s: " % curfile)
         curstream = open(curfile, "rb")
         data = curstream.read(size)
         while data:
             out_stream.write(data)
-            curstream.read(size)
+            data = curstream.read(size)
         curstream.close()
-        curstream = None
-        time.sleep(1)
+
     sys.exit(0)
 
 def logevent(etype, edata, edesc):
