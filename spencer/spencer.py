@@ -8,6 +8,7 @@ import struct
 import json
 import socket
 import requests
+import cStringIO
 import os
 from collections import OrderedDict
 import math
@@ -65,6 +66,14 @@ def main():
     out_stream.setperiodsize(size)
 
     soundfiles = ['/home/pi/haunt_electric1.wav']
+    memsound = {}
+    print("Loading Sound files to memory")
+    for sf in soundfiles:
+        f = open(sf, "rb")
+        sfdata = f.read()
+        f.close()
+        memsound[sf] = cStringIO.StringIO(sfdata)
+
 
     while True:
         curtime = int(time.time())
@@ -73,11 +82,11 @@ def main():
             lasthb = curtime
 
         curfile = random.choice(soundfiles)
-        curstream = open(curfile, "rb")
-        data = curstream.read(size)
+        memsound[curfile].seek(0)
+        data = memsound[curfile].read(size)
         while data:
             out_stream.write(data)
-            data = curstream.read(size)
+            data = memsound[curfile].read(size)
             rmsval = rms(data)
             sounds.append(rmsval)
             ug = sounds.pop(0)
@@ -93,7 +102,6 @@ def main():
                 strip.setBrightness(defaultBright)
                 setAllLEDS(strip, [defaultColor])
                 beat = False
-        curstream.close()
 
     sys.exit(0)
 
