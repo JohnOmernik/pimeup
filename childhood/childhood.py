@@ -49,12 +49,15 @@ def main():
         if curtime - lasthb > hbinterval:
             logevent("heartbeat", "Working", "Childhood room up and running")
             lasthb = curtime
+        print("Opening %s: " % curfile)
         curstream = open(curfile, "rb")
         data = curstream.read(size)
         while data:
             out_stream.write(data)
             curstream.read(size)
         curstream.close()
+        curstream = None
+        time.sleep(1)
     sys.exit(0)
 
 def logevent(etype, edata, edesc):
