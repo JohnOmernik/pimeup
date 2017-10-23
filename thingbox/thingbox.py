@@ -197,7 +197,10 @@ def handle_buttons(buttons):
         else:
             processAction("S")
     elif (buttons & cwiid.BTN_2):
-        print("Two")
+        if b_val == True:
+            processAction("F")
+        else:
+            processAction("P")
     elif (buttons & cwiid.BTN_PLUS):
         processAction("G")
     elif (buttons & cwiid.BTN_MINUS):
