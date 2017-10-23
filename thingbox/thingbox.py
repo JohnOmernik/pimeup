@@ -6,7 +6,16 @@ import sys
 import socket
 import json
 from socket import error as socket_error
+import RPi.GPIO as GPIO
+import cwiid
 
+
+#GPIO Mode (BOARD / BCM)
+GPIO.setmode(GPIO.BCM)
+ #set GPIO Pins
+GPIO_MODE= 12
+#set GPIO direction (IN / OUT)
+GPIO.setup(GPIO_MODE, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # Initialise the PCA9685 using the default address (0x40).
 pwm = Adafruit_PCA9685.PCA9685(0x40)
@@ -17,22 +26,35 @@ ACTIONS = {}
 HOMENET = 0
 NETWORK = 1
 STATUS = ""
-try:
-    chknet = sys.argv[1]
-    print("Chknet: %s" % chknet)
-    if int(chknet) == 2: # No network command line interface
-        NETWORK = 0
-    elif int(chknet) == 1:  # Use home net ip of 192.168.0.130
-        HOMENET = 1
-    else:
+wiimode = 0
+
+if GPIO.input(GPIO_MODE) == 1:
+    print("Wii mode is enabled!  (Network and command line will not function)")
+    wiimode = 1
+elif GPIO.input(GPIO_MODE) == 0:
+    print("Wii mode is not enabled")
+    wiimode = 0
+
+if wiimode == 0:
+    try:
+        chknet = sys.argv[1]
+        print("Chknet: %s" % chknet)
+        if int(chknet) == 2: # No network command line interface
+            NETWORK = 0
+        elif int(chknet) == 1:  # Use home net ip of 192.168.0.130
+            HOMENET = 1
+        else:
+            NETWORK = 1
+    except:
         NETWORK = 1
-except:
-    NETWORK = 1
+else:
+    NETWORK = 0
 
 thingfile = "/home/pi/pimeup/thingbox/thing.json"
 thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 STATUS_OPT = [ 'LIDUP', 'HANDUPLIDUP', 'HANDDOWNLIDUP', 'HANDDOWNLIDDOWN' ]
 DEBUG = 0
+BUT_DEBUG = 0
 NET_DEBUG = 1
 if HOMENET == 1:
     UDP_IP = '192.168.0.130'
@@ -42,18 +64,30 @@ print("UDP IP is %s" % UDP_IP)
 UDP_PORT = 30000
 UDP_BUFFER_SIZE = 5
 
+
+rpt_mode = 0
+wiimote = None
+connected = False
+rumble = 0
+b_val = False
+
 def main():
     global SRV_OPTIONS
     global ACTIONS
     global STATUS
+    global wiimote
+    global rumble
+    global rpt_mode
+    global connected
+    global b_val
 
     SRV_OPTIONS = loadfile(thingfile)
     ACTIONS = loadfile(thingactionfile)
-
     cur_finger = -1
     ACT_SHORT = []
     upact = ""
     downact = ""
+    STATUS="HANDDOWNLIDDOWN"
     for x in ACTIONS:
         if x['KEY'] == "U":
             upact = x['ACTION']
@@ -66,15 +100,42 @@ def main():
         sock = socket.socket(socket.AF_INET, # Internet
                         socket.SOCK_DGRAM) # UDP
         sock.bind((UDP_IP, UDP_PORT))
+    if wiimode == 1:
+        # Setup Wii remote
+        print ("Press 1+2 to connect Wii")
+        while not connected:
+            try:
+                wiimote = cwiid.Wiimote()
+                print("Connected!")
+                connected = True
+                rumble ^= 1
+                wiimote.rumble = rumble
+                time.sleep(2)
+                rumble ^= 1
+                wiimote.rumble = rumble
+            except:
+                print("Trying Again, please press 1+2")
+                time.sleep(2)
+
+            # Now setup Wii Callback, Buttons, and Accelerometer
+        wiimote.mesg_callback = callback
+        # For Thing box mode we enable  Button
+        rpt_mode ^= cwiid.RPT_BTN
+
+        # Enable the messages in callback
+        wiimote.enable(cwiid.FLAG_MESG_IFC);
+        wiimote.rpt_mode = rpt_mode
+
     try:
         while True:
             if NETWORK:
                 data, addr = sock.recvfrom(UDP_BUFFER_SIZE)
-            else:
+            elif wiimode == 0:
                 data = raw_input("Please Enter Raw Command: ")
-            if not data:
+            else: # This is wii mode
+                time.sleep(0.5)
                 continue
-            else:
+            if data:
                 if DEBUG or NET_DEBUG:
                     print("Recieved Data Update: %s" % data)
 
@@ -105,6 +166,53 @@ def main():
     except KeyboardInterrupt:
         exitGracefully()
 
+def handle_buttons(buttons):
+    global b_val
+    global STATUS
+    global SENSORS
+
+    # The B (trigger) Button does cool things for us
+    # When pressed that allows the glove sensors to be read and sent
+    # It also changes what the other buttons do
+
+    if (buttons & cwiid.BTN_B):
+        b_val = True
+    else:
+        b_val = False
+
+    if (buttons  & cwiid.BTN_UP):
+        if b_val == True:
+            processAction("O")
+    elif (buttons & cwiid.BTN_DOWN):
+        if b_val == True:
+            processAction("C")
+    elif (buttons & cwiid.BTN_LEFT):
+        processAction("W")
+    elif (buttons & cwiid.BTN_RIGHT):
+        if b_val == True:
+           processAction("B")
+    elif (buttons & cwiid.BTN_1):
+        if b_val == False:
+            processAction("M")
+        else:
+            processAction("S")
+    elif (buttons & cwiid.BTN_2):
+        print("Two")
+    elif (buttons & cwiid.BTN_PLUS):
+        processAction("G")
+    elif (buttons & cwiid.BTN_MINUS):
+        # Locks the wrist up
+        processAction("L")
+    elif (buttons & cwiid.BTN_A):
+        # A will summon thing if B is not pressed, and put him a way if B is pressed
+        if b_val == False:
+            processAction("U")
+        elif b_val == True:
+            processAction("D")
+    elif (buttons & cwiid.BTN_HOME):
+        # Home Calms Servos
+        processAction("A")
+
 
 def setfingerperc(cmdkey, cmdorigval, ignorestatus=False):
     global SRV_OPTIONS
@@ -120,6 +228,21 @@ def setfingerperc(cmdkey, cmdorigval, ignorestatus=False):
         pwm.set_pwm(cmdkey, 0, setval)
     else:
         print("Will not preform commands due to STATUS: %s" % STATUS)
+
+
+def callback(mesg_list, time):
+    global SENSORS
+    global b_val
+    global STATUS
+    for mesg in mesg_list:
+        if mesg[0] == cwiid.MESG_BTN:
+            handle_buttons(mesg[1])
+            if BUT_DEBUG or DEBUG:
+                print("Time: %s" % time)
+                print 'Button Report: %.4X' % mesg[1]
+        else:
+            print 'Unknown Report'
+
 
 def processAction(actKey):
     global STATUS
