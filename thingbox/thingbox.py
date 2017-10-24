@@ -35,20 +35,19 @@ elif GPIO.input(GPIO_MODE) == 0:
     print("Wii mode is not enabled")
     wiimode = 0
 
-if wiimode == 0:
-    try:
-        chknet = sys.argv[1]
-        print("Chknet: %s" % chknet)
-        if int(chknet) == 2: # No network command line interface
-            NETWORK = 0
-        elif int(chknet) == 1:  # Use home net ip of 192.168.0.130
-            HOMENET = 1
-        else:
-            NETWORK = 1
-    except:
+try:
+    chknet = sys.argv[1]
+    print("Chknet: %s" % chknet)
+    if int(chknet) == 2: # No network command line interface
+        NETWORK = 0
+        wiimode = 0 # We reset this back
+    elif int(chknet) == 1 and wiimode == 0:  # Use home net ip of 192.168.0.130
+        HOMENET = 1
+except:
+    if wiimode == 0:
         NETWORK = 1
-else:
-    NETWORK = 0
+    else:
+        NETWORK = 0
 
 thingfile = "/home/pi/pimeup/thingbox/thing.json"
 thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
@@ -83,6 +82,8 @@ def main():
 
     SRV_OPTIONS = loadfile(thingfile)
     ACTIONS = loadfile(thingactionfile)
+    print(json.dumps(SRV_OPTIONS, sort_keys=True, indent=4))
+    print(json.dumps(ACTIONS, sort_keys=True, indent=4))
     cur_finger = -1
     ACT_SHORT = []
     upact = ""
@@ -138,7 +139,11 @@ def main():
             if data:
                 if DEBUG or NET_DEBUG:
                     print("Recieved Data Update: %s" % data)
-
+                if data == "i":
+                    print(json.dumps(SRV_OPTIONS, sort_keys=True, indent=4))
+                    print(json.dumps(ACTIONS, sort_keys=True, indent=4))
+                elif len(data) == 1:
+                    processAction(data)
                 tdata = data.split(":")
                 if len(tdata) !=2 and len(tdata) != 4:
                     print("Ignoring Bad Data: %s" % data)
@@ -304,7 +309,7 @@ def loadfile(f):
             pass
         else:
             pj += line.strip() + "\n"
-    print(pj)
+#    print(pj)
     return json.loads(pj)
 
 def exitGracefully():
@@ -317,7 +322,7 @@ def exitGracefully():
     pwm.set_pwm(4, 4096, 0)
     pwm.set_pwm(5, 4096, 0)
     pwm.set_pwm(6, 4096, 0)
-    pwm.set_pwm(7, 4096, 0)
+#    pwm.set_pwm(7, 4096, 0)
     pwm.set_pwm(8, 4096, 0)
     sys.exit(0)
 
