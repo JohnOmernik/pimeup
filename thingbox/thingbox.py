@@ -82,8 +82,9 @@ def main():
 
     SRV_OPTIONS = loadfile(thingfile)
     ACTIONS = loadfile(thingactionfile)
-    print(json.dumps(SRV_OPTIONS, sort_keys=True, indent=4))
-    print(json.dumps(ACTIONS, sort_keys=True, indent=4))
+    for x in SRV_OPTIONS:
+        print(x)
+    printActions()
     cur_finger = -1
     ACT_SHORT = []
     upact = ""
@@ -140,10 +141,11 @@ def main():
                 if DEBUG or NET_DEBUG:
                     print("Recieved Data Update: %s" % data)
                 if data == "i":
-                    print(json.dumps(SRV_OPTIONS, sort_keys=True, indent=4))
-                    print(json.dumps(ACTIONS, sort_keys=True, indent=4))
+                    for x in SRV_OPTIONS:
+                        print(x)
+                    printActions()
                 elif len(data) == 1:
-                    processAction(data)
+                    data = "A:" + data
                 tdata = data.split(":")
                 if len(tdata) !=2 and len(tdata) != 4:
                     print("Ignoring Bad Data: %s" % data)
@@ -252,6 +254,25 @@ def callback(mesg_list, time):
             print 'Unknown Report'
 
 
+
+def printActions():
+    type_dict = {}
+    type_dict['0'] = "Maintaining the Thing"
+    type_dict['1'] = "Single Actions"
+    type_dict['2'] = "Neat Actions"
+    type_dict['3'] = "Addams Family Macros"
+
+    for t in range(4):
+        print("")
+        print("------------------------------------------------")
+        print("Type %s - %s" % (t, type_dict[str(t)]))
+        for x in ACTIONS:
+            if x['TYPE'] == t:
+                print("\t%s - %s\t\t%s" % (x['KEY'], x['NAME'], x['DESC']))
+        print("")
+
+
+
 def processAction(actKey):
     global STATUS
     act = {}
@@ -288,13 +309,17 @@ def processAction(actKey):
                     shutdown = False
                 if shutdown == True:
                     for x in range(len(SRV_OPTIONS)):
-                        pwm.set_pwm(x, 4096, 0)
+                        if x != 5 and x != 7:
+                            pwm.set_pwm(x, 4096, 0)
                 else:
                     processAction(val)
             else:
                 act = int(act)
                 val = int(val)
-                setfingerperc(act, val, True)
+                if val == -10:
+                    pwm.set_pwm(act, 4096, 0)
+                else:
+                    setfingerperc(act, val, True)
         if new_status != "":
             STATUS = new_status
 
@@ -320,7 +345,7 @@ def exitGracefully():
     pwm.set_pwm(2, 4096, 0)
     pwm.set_pwm(3, 4096, 0)
     pwm.set_pwm(4, 4096, 0)
-    pwm.set_pwm(5, 4096, 0)
+#    pwm.set_pwm(5, 4096, 0)
     pwm.set_pwm(6, 4096, 0)
 #    pwm.set_pwm(7, 4096, 0)
     pwm.set_pwm(8, 4096, 0)
