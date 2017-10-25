@@ -140,34 +140,44 @@ def main():
             if data:
                 if DEBUG or NET_DEBUG:
                     print("Recieved Data Update: %s" % data)
-                if data == "i":
-                    for x in SRV_OPTIONS:
-                        print(x)
-                    printActions()
-                elif len(data) == 1:
-                    data = "A:" + data
-                tdata = data.split(":")
-                if len(tdata) !=2 and len(tdata) != 4:
-                    print("Ignoring Bad Data: %s" % data)
-                    continue
+                if data.find(":") >= 0:
+                    pass
                 else:
-                    cmdkey = tdata[0]
-                    cmdval = tdata[1]
-                    if str(cmdkey) == "A" and cmdval in ACT_SHORT:
-                        processAction(cmdval)
-                    elif str(cmdkey) == "S" and cmdval != "":
-                        if cmdval in STATUS_OPT:
-                            STATUS = cmdval
-                        else:
-                            print("Status needs to be in %s" % STATUS_OPT)
+                    mdata = -10000
+                    try:
+                        mdata = int(data)
+                    except:
+                        mdata = -10000
+                    if mdata > -10000:
+                        data = "A:" + str(mdata)
+                    elif data == "i":
+                        for x in SRV_OPTIONS:
+                            print(x)
+                        printActions()
+                        continue
+                    elif len(data) == 1:
+                        data = "A:" + data
                     else:
-                        try:
-                            cmdkey = int(cmdkey)
-                            cmdval = int(cmdval)
-                        except:
-                            print("cmdkey must be A or an integer")
-                            continue
-                        setfingerperc(cmdkey, cmdval)
+                        print("I think its bad: %s" % data)
+                        continue
+                tdata = data.split(":")
+                cmdkey = tdata[0]
+                cmdval = tdata[1]
+                if str(cmdkey) == "A" and cmdval in ACT_SHORT:
+                    processAction(cmdval)
+                elif str(cmdkey) == "S" and cmdval != "":
+                    if cmdval in STATUS_OPT:
+                        STATUS = cmdval
+                    else:
+                        print("Status needs to be in %s" % STATUS_OPT)
+                else:
+                    try:
+                        cmdkey = int(cmdkey)
+                        cmdval = int(cmdval)
+                    except:
+                        print("cmdkey must be A or an integer")
+                        continue
+                    setfingerperc(cmdkey, cmdval)
     except socket_error:
         exitGracefully()
     except KeyboardInterrupt:
