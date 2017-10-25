@@ -3,7 +3,7 @@
 {"NAME": "lockwristup", "TYPE": 0, "STATUS":"", "REQ_STATUS": "", "KEY": "L", "DESC": "Lock the wrist servo up - allstop will clear this", "ACTION": "7:85"},
 {"NAME": "lidup", "TYPE": 1, "STATUS":"LIDUP", "REQ_STATUS": "", "KEY": "O", "DESC": "Opens the Lid", "ACTION": "8:50,P:0.2,8:60,P:0.2,8:70,P:0.2,8:80,P:0.2,8:90,P:0.2,8:100"},
 {"NAME": "liddown", "TYPE": 1, "STATUS":"LIDDOWN", "REQ_STATUS": "LIDUP", "KEY": "C", "DESC": "Closesthe Lid", "ACTION": "8:90,P:0.1,8:80,P:0.1,8:70,P:0.1,8:60,P:0.1,8:50,P:0.2,8:40,P:0.2,8:30,P:0.2,8:20,P:0.2,8:10,P:0.2,8:0"},
-{"NAME": "upandready", "TYPE": 1, "STATUS":"HANDUPLIDUP", "REQ_STATUS": "LIDUP", "KEY": "U", "DESC": "Bring up to ready position", "ACTION": "7:85,P:0.5,5:0,P:0.5,5:100,S:HANDUPLIDUP,P:0.2,6:50,P:0.5,A:N,P:0.2,A:A,P:0.1,A:L"},
+{"NAME": "upandready", "TYPE": 1, "STATUS":"HANDUPLIDUP", "REQ_STATUS": "LIDUP", "KEY": "U", "DESC": "Bring up to ready position", "ACTION": "7:85,P:0.5,P:0.5,5:100,S:HANDUPLIDUP,P:0.2,6:50,P:0.5,A:N,P:0.2,A:A,P:0.1,A:L"},
 {"NAME": "downandaway", "TYPE": 1,"STATUS": "HANDDOWNLIDUP", "REQ_STATUS": "HANDUPLIDUP", "KEY": "D", "DESC": "Folds up ready to sleep", "ACTION": "A:M,P:0.2,5:50,P:0.2,6:100,P:0.3,7:30,P:0.2,7:20,P:0.2,7:15,P:0.2,7:10,P:0.2,7:5,P:0.2,7:0,P:0.2,A:A,P:0.1,5:-10,P:0.1,7:-10"},
 {"NAME": "fingersup", "TYPE": 1, "STATUS": "", "REQ_STATUS": "HANDUPLIDUP", "KEY": "N", "DESC": "Extend the fingers", "ACTION":"4:100,P:0.1,3:100,P:0.1,2:100,P:0.1,1:100"},
 {"NAME": "shakepointer", "TYPE": 1, "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "F", "DESC": "Point forward", "ACTION": "1:0,P:0.1,1:50,P:0.1,1:100,P:0.2,1:50,P:0.2,1:100"},
@@ -14,11 +14,12 @@
 {"NAME": "fistbump", "TYPE": 2, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "S", "DESC": "Bump the fist", "ACTION": "A:M,5:0,P:0.1,5:20,P:0.1,5:0,P:0.5"},
 {"NAME": "shakefist", "TYPE": 2, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "W", "DESC": "Wave back and forth", "ACTION": "6:25,P:0.1,6:75,P:0.1,6:25,P:0.1,6:75,P:0.1,6:25,P:0.1,6:75,P:0.1,6:25,P:0.1,6:75,P:0.1,6:25,P:0.1,6:75,P:0.1,6:25,P:0.1,6:75,P:0.1,6:25,P:0.1,6:75,6:50"},
 {"NAME": "gimeesugar", "TYPE": 2, "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "G", "DESC": "Thing gives some sugar", "ACTION": "A:M,P:0.2,A:S,P:0.2,1:50,P:0.1,2:50,P:0.1,3:50,P:0.1,4:50,P:0.1,1:35,P:0.1,2:60,P:0.1,3:50,P:0.1,4:35,1:50,P:0.1,2:50,P:0.1,3:50,P:0.1,4:50,P:0.1,1:35,P:0.1,2:60,P:0.1,3:50,P:0.1,4:35"},
-{"NAME": "quickpopup", "TYPE": 3, "STATUS":"", "REQ_STATUS": "", "KEY": "0", "DESC": "Quick pop up for the the Lucas scnee", "ACTION": "A:M,5:60,P:0.1,6:95,1:100,P:0.1,A:K,P:0.1,A:K,P:0.1,A:U,P:0.1,A:W,P:0.1,A:M,5:30,P:0.1,6:95,1:100,P:0.1,A:K,P:0.1,A:U"},
-{"NAME": "pointatstairs", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "1", "DESC": "Point at the stairs and get Gomez Attnetion", "ACTION": "A:M,5:60,P:0.1,6:95,1:100,P:0.1,A:K,P:0.1,A:K,P:0.1,A:U,P:0.1,A:W,P:0.1,A:M,5:30,P:0.1,6:95,1:100,P:0.1,A:K,P:0.1,A:U"},
-{"NAME": "pointatpotion", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "2", "DESC": "Point at potions", "ACTION": "A:M,6:10,P:0.1,5:0,6:20,P:0.1,6:10,P:0.2,1:100"},
-{"NAME": "pointatpugsley", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "3", "DESC": "Point at pugleys", "ACTION": "A:M,6:100,P:0.1,5:0,1:100,P:0.1,1:100,P:0.1,A:K,A:K"},
-{"NAME": "pointatshelf", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "4", "DESC": "Point at the shelf", "ACTION": "A:M,5:30,P:0.1,6:20,1:100,P:0.1,1:70,P:0.1,1:100,P:0.1,1:70,P:0.1,1:100,P:0.1,1:70,P:0.1,1:100"}
+{"NAME": "ahyourmother", "TYPE": 3, "STATUS":"", "REQ_STATUS": "", "KEY": "0", "DESC": "Make a pointy finger", "ACTION": "2:0,P:0.2,3:0,P:0.2,4:0,P:0.2,A:W"},
+{"NAME": "watchconspire", "TYPE": 3, "STATUS":"", "REQ_STATUS": "", "KEY": "1", "DESC": "Wrist down and fist", "ACTION": "A:M,P:0.2,5:10,P:0.2,A:A,P:0.1,A:L"},
+{"NAME": "pointatstairs", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "2", "DESC": "Point at the stairs and get Gomez Attnetion", "ACTION": "A:M,5:60,P:0.1,6:95,1:100,P:0.1,A:K,P:0.1,A:K,P:0.1,A:U,P:0.1,A:W,P:0.1,A:M,5:30,P:0.1,6:95,1:100,P:0.1,A:K,P:0.1,A:U"},
+{"NAME": "pointatpotion", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "3", "DESC": "Point at potions", "ACTION": "A:M,6:10,P:0.1,5:0,6:20,P:0.1,6:10,P:0.2,1:100"},
+{"NAME": "pointatpugsley", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "4", "DESC": "Point at pugleys", "ACTION": "A:M,6:100,P:0.1,5:0,1:100,P:0.1,1:100,P:0.1,A:K,A:K"},
+{"NAME": "pointatshelf", "TYPE": 3, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "5", "DESC": "Point at the shelf", "ACTION": "A:M,5:30,P:0.1,6:20,1:100,P:0.1,1:70,P:0.1,1:100,P:0.1,1:70,P:0.1,1:100,P:0.1,1:70,P:0.1,1:100"}
 ]
 
 # {"NAME": "", "STATUS":"", "REQ_STATUS": "", "KEY": "", "DESC": "", "ACTION": ""}
