@@ -10,15 +10,17 @@ import json
 tdelay = 0.2
 DEBUG = 0
 ACC_DEBUG = 0
-BUT_DEBUG = 1
+BUT_DEBUG = 0
 FLX_DEBUG = 0
 PRC_DEBUG = 0
 NET_DEBUG = 0
+ACT_DEBUG = 1
 NETWORK = 1
 HOMENET = 0
 ACTIONS = []
+ALLOWED_KEYS = []
 action_idx = 0
-thingactionfile = "/home/pi/thingbox/thingactions.json"
+thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 
 
 try:
@@ -41,8 +43,6 @@ else:
 
 UDP_PORT = 30000
 UDP_SOCK = None
-
-
 
 
 
@@ -82,6 +82,7 @@ wiimote = None
 connected = False
 rumble = 0
 b_val = False
+
 def main():
     global wiimote
     global rpt_mode
@@ -101,8 +102,13 @@ def main():
     myact = loadfile(thingactionfile)
 
     for x in myact:
-        
-        ACTIONS.append(
+        if x['TYPE'] == 3: # Load the Addams Family Actions
+            tact = {"NAME": x['NAME'], "KEY": x['KEY'], "DESC": x['DESC']}
+            ACTIONS.append(tact)
+    if DEBUG or ACT_DEBUG:
+        for x in range(len(ACTIONS)):
+            print("Action %s - KEY: %s - NAME: %s - DESC: %s" % (x, ACTIONS[x]['KEY'], ACTIONS[x]['NAME'], ACTIONS[x]['DESC']))
+
 
 # Setup Wii remote
     print ("Press 1+2 to connect Wii")
@@ -170,6 +176,11 @@ def callback(mesg_list, time):
         else:
             print 'Unknown Report'
 
+def updateleds():
+    global action_idx
+    global wiimote
+    wiimote.led = action_idx
+
 def handle_buttons(buttons):
     global b_val
     global status
@@ -185,7 +196,7 @@ def handle_buttons(buttons):
     else:
         b_val = False
 
- if (buttons  & cwiid.BTN_UP):
+    if (buttons  & cwiid.BTN_UP):
         if b_val == False:
             action_idx = 0
             updateleds()
@@ -274,31 +285,40 @@ def procAction(action):
     global b_val
     global UDP_SOCK
     global STATUS
-
+    myact = ""
     if action == "U":
         if STATUS.find("LIDUP") < 0:
             procAction("O")
-        sendCmd("A:U::", "Action")
-        STATUS = "LIDUPHANDUP"
+        myact = "A:U::"
+        STATUS = "HANDUPLIDUP"
     elif action == "O":
-        sendCmd("A:O::", "Action")
+        myact = "A:O::"
         STATUS = "LIDUP"
     elif action == "D":
         if STATUS.find("HANDUP") >= 0:
-            sendCmd("A:D::", "Action")
+            myact = "A:D::"
             STATUS = "HANDDOWNLIDUP"
     elif action == "C":
-        if STATUS.find("HANDDOWN") < 0:
-            procAction("P")
-        sendCmd("A:C::", "Action")
-        STATUS = "LIDDOWNHANDDOWN"
+        if STATUS.find("HANDDOWN") >= 0:
+            myact = "A:C::"
+            STATUS = "HANDDOWNLIDDOWN"
     elif action == "B":
         if STATUS.find("LIDDOWN") >= 0:
-            sendCmd("A:B::", "Action")
+            myact = "A:B::"
+    elif action == "A":
+        myact = "A:A::"
+    elif action == "L":
+        if STATUS.find("LIDUP") >= 0:
+            myact = "A:L::"
+            STATUS = "HANDUPLIDUP"
     else:
-        if STATUS.find("HANDUP") >= 0:
-            sendCmd("A:" + action + "::", "Action")
-
+        # This could block some actions
+        if STATUS.find("HANDUP") >= 0 or action in ALLOWED_KEYS:
+            myact = "A:" + action + "::"
+    if myact != "":
+        sendCmd(myact, "Action")
+        if DEBUG or ACT_DEBUG:
+            print("Sending Action: %s" % myact)
 
 
 
