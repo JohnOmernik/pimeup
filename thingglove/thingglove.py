@@ -140,7 +140,7 @@ def main():
         while True:
         # read the analog pin
             if b_val == True:
-                if STATUS == "LIDUPHANDUP":
+                if STATUS == "HANDUPLIDUP":
                     for x in range(len(SENSORS)):
                         if SENSORS[x]['TYPE'] == 'adc':
                             flex_val = mcp.read_adc(x)
@@ -167,7 +167,7 @@ def callback(mesg_list, time):
             x = mesg[1][cwiid.X]
             y = mesg[1][cwiid.Y]
             z = mesg[1][cwiid.Z]
-            if STATUS == "LIDUPHANDUP":
+            if STATUS == "HANDUPLIDUP":
                 if b_val == True:
                     procValue(5, y)
                     procValue(6, x)
@@ -200,10 +200,16 @@ def handle_buttons(buttons):
         if b_val == False:
             action_idx = 0
             updateleds()
+        else:
+            if STATUS.find("HANDUP") >= 0:
+                processAction("F")
     elif (buttons & cwiid.BTN_DOWN):
         if b_val == False:
             action_idxidx = len(ACTIONS) - 1
             updateleds()
+        else:
+            if STATUS.find("LIDUP") < 0 and STATUS.find("HANDUP") < 0:
+                processAction("B")
     elif (buttons & cwiid.BTN_LEFT):
         if b_val == False:
             if action_idx == 0:
@@ -253,10 +259,15 @@ def handle_buttons(buttons):
             #Summon Thing
             procAction("U")
     elif (buttons & cwiid.BTN_1):
-        pass
+        if b_val == False:
+            processAction("K")
+        else:
+            processAction("N")
     elif (buttons & cwiid.BTN_2):
-        pass
-
+        if b_val == False:
+            processAction("W")
+        else:
+            processAction("M")
 def sendCmd(sendstr, curname):
     global UDP_SOCK
     if len(sendstr) != 5:
@@ -292,8 +303,9 @@ def procAction(action):
         myact = "A:U::"
         STATUS = "HANDUPLIDUP"
     elif action == "O":
-        myact = "A:O::"
-        STATUS = "LIDUP"
+        if STATUS.find("LIDUP") < 0:
+            myact = "A:O::"
+            STATUS = "LIDUP"
     elif action == "D":
         if STATUS.find("HANDUP") >= 0:
             myact = "A:D::"

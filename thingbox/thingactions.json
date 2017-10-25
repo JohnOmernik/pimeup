@@ -6,7 +6,7 @@
 {"NAME": "upandready", "TYPE": 1, "STATUS":"HANDUPLIDUP", "REQ_STATUS": "LIDUP", "KEY": "U", "DESC": "Bring up to ready position", "ACTION": "7:85,P:0.5,5:0,P:0.5,5:100,S:HANDUPLIDUP,P:0.2,6:50,P:0.5,A:N,P:0.2,A:A,P:0.1,A:L"},
 {"NAME": "downandaway", "TYPE": 1,"STATUS": "HANDDOWNLIDUP", "REQ_STATUS": "HANDUPLIDUP", "KEY": "D", "DESC": "Folds up ready to sleep", "ACTION": "A:M,P:0.2,5:50,P:0.2,6:100,P:0.3,7:30,P:0.2,7:20,P:0.2,7:15,P:0.2,7:10,P:0.2,7:5,P:0.2,7:0,P:0.2,A:A,P:0.1,5:-10,P:0.1,7:-10"},
 {"NAME": "fingersup", "TYPE": 1, "STATUS": "", "REQ_STATUS": "HANDUPLIDUP", "KEY": "N", "DESC": "Extend the fingers", "ACTION":"4:100,P:0.1,3:100,P:0.1,2:100,P:0.1,1:100"},
-{"NAME": "pointforward", "TYPE": 1, "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "F", "DESC": "Point forward", "ACTION": "0:0,P:0.1,1:0,P:0.2,2:0,P:0.2,3:0,P:0.1,4:0,P:0.2,5:0,P:0.2,1:100,P:0.2,1:50,P:0.2,1:100,P:0.2,1:50,P:0.2,1:100"},
+{"NAME": "shakepointer", "TYPE": 1, "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "F", "DESC": "Point forward", "ACTION": "1:0,P:0.1,1:50,P:0.1,1:100,P:0.2,1:50,P:0.2,1:100"},
 {"NAME": "pointup", "TYPE": 1, "STATUS": "", "REQ_STATUS": "HANDUP", "KEY": "P", "DESC": "Point up", "ACTION": "0:0,P:0.1,1:0,P:0.2,2:0,P:0.2,3:0,P:0.1,4:0,P:0.2,1:100,P:0.2,1:50,P:0.2,1:100,P:0.2,1:50,P:0.2,1:100"},
 {"NAME": "makefist", "TYPE": 1, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "M", "DESC": "Make a fist", "ACTION":"5:100,0:0,P:0.1,1:0,P:0.1,2:0,P:0.1,3:0,P:0.1,4:0"},
 {"NAME": "nodfist", "TYPE": 1, "STATUS":"", "REQ_STATUS": "HANDUP", "KEY": "K", "DESC": "Shake the fist", "ACTION": "5:30,P:0.2,5:60,P:0.2,5:30,P:0.2,5:60,P:0.2,5:30"},
