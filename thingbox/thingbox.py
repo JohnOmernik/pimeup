@@ -299,6 +299,8 @@ def processAction(actKey):
             if act == "P":
                 val = float(val)
                 time.sleep(val)
+            elif act == "S":
+                STATUS = val
             elif act == "A":
                 shutdown = False
                 try:
