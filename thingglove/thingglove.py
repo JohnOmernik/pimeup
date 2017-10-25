@@ -271,7 +271,14 @@ def handle_buttons(buttons):
             procAction("M")
 def sendCmd(sendstr, curname):
     global UDP_SOCK
-    if len(sendstr) != 5:
+    if len(sendstr) < 5:
+        u = len(sendstr)
+        p = 5 - u
+        tpad  =  p * ":"
+        tsendstr = sendstr + tpad
+        print("Making sendstr (%s) into %s" % (sendstr, tsendstr))
+        sendstr = tsendstr
+    else:
         print("*WARNING CMD SHOULD BE only 5 characters!")
 
     if (DEBUG or NET_DEBUG):
@@ -301,33 +308,33 @@ def procAction(action):
     if action == "U":
         if STATUS.find("LIDUP") < 0:
             procAction("O")
-        myact = "A:U::"
+        myact = "A:U"
         STATUS = "HANDUPLIDUP"
     elif action == "O":
         if STATUS.find("LIDUP") < 0:
-            myact = "A:O::"
+            myact = "A:O"
             STATUS = "LIDUP"
     elif action == "D":
         if STATUS.find("HANDUP") >= 0:
-            myact = "A:D::"
+            myact = "A:D"
             STATUS = "HANDDOWNLIDUP"
     elif action == "C":
         if STATUS.find("HANDDOWN") >= 0 or STATUS.find("HANDUP") < 0:
-            myact = "A:C::"
+            myact = "A:C"
             STATUS = "HANDDOWNLIDDOWN"
     elif action == "B":
         if STATUS.find("LIDDOWN") >= 0 or STATUS.find("LIDUP") < 0:
-            myact = "A:B::"
+            myact = "A:B"
     elif action == "A":
-        myact = "A:A::"
+        myact = "A:A"
     elif action == "L":
         if STATUS.find("LIDUP") >= 0:
-            myact = "A:L::"
+            myact = "A:L"
             STATUS = "HANDUPLIDUP"
     else:
         # This could block some actions
         if STATUS.find("HANDUP") >= 0 or action in ALLOWED_KEYS:
-            myact = "A:" + action + "::"
+            myact = "A:" + action
     if myact != "":
         sendCmd(myact, "Action")
         if DEBUG or ACT_DEBUG:
