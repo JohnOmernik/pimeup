@@ -138,7 +138,6 @@ def main():
 
     try:
         while True:
-        # read the analog pin
             if b_val == True:
                 if STATUS == "HANDUPLIDUP":
                     for x in range(len(SENSORS)):
@@ -183,7 +182,7 @@ def updateleds():
 
 def handle_buttons(buttons):
     global b_val
-    global status
+    global STATUS
     global SENSORS
     global ACTIONS
     global action_idx
@@ -202,14 +201,16 @@ def handle_buttons(buttons):
             updateleds()
         else:
             if STATUS.find("HANDUP") >= 0:
-                processAction("F")
+                procAction("F")
     elif (buttons & cwiid.BTN_DOWN):
         if b_val == False:
             action_idxidx = len(ACTIONS) - 1
             updateleds()
         else:
             if STATUS.find("LIDUP") < 0 and STATUS.find("HANDUP") < 0:
-                processAction("B")
+                procAction("B")
+            else:
+                print(STATUS)
     elif (buttons & cwiid.BTN_LEFT):
         if b_val == False:
             if action_idx == 0:
@@ -260,14 +261,14 @@ def handle_buttons(buttons):
             procAction("U")
     elif (buttons & cwiid.BTN_1):
         if b_val == False:
-            processAction("K")
+            procAction("K")
         else:
-            processAction("N")
+            procAction("N")
     elif (buttons & cwiid.BTN_2):
         if b_val == False:
-            processAction("W")
+            procAction("W")
         else:
-            processAction("M")
+            procAction("M")
 def sendCmd(sendstr, curname):
     global UDP_SOCK
     if len(sendstr) != 5:
@@ -311,11 +312,11 @@ def procAction(action):
             myact = "A:D::"
             STATUS = "HANDDOWNLIDUP"
     elif action == "C":
-        if STATUS.find("HANDDOWN") >= 0:
+        if STATUS.find("HANDDOWN") >= 0 or STATUS.find("HANDUP") < 0:
             myact = "A:C::"
             STATUS = "HANDDOWNLIDDOWN"
     elif action == "B":
-        if STATUS.find("LIDDOWN") >= 0:
+        if STATUS.find("LIDDOWN") >= 0 or STATUS.find("LIDUP") < 0:
             myact = "A:B::"
     elif action == "A":
         myact = "A:A::"
