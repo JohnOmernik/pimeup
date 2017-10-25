@@ -5,17 +5,22 @@ import socket
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 import cwiid
-
+import json
 
 tdelay = 0.2
 DEBUG = 0
 ACC_DEBUG = 0
-BUT_DEBUG = 0
+BUT_DEBUG = 1
 FLX_DEBUG = 0
 PRC_DEBUG = 0
-NET_DEBUG = 1
+NET_DEBUG = 0
 NETWORK = 1
 HOMENET = 0
+ACTIONS = []
+action_idx = 0
+thingactionfile = "/home/pi/thingbox/thingactions.json"
+
+
 try:
     chknet = sys.argv[1]
     print("Chknet: %s" % chknet)
@@ -71,14 +76,6 @@ SENSORS = [
     {"NAME": "WristTurn", "TYPE": "acc", "REMOTE": 6, "MIN": 1000, "MAX": 0, "CHANGES":0, "LAST": 0, "CHANGED": False, "SENS_THRES": 3, "CHNG_THRES": mychng_thres, "INVERT": False, "ROUNDVAL": roundval, "ADJVAL": 0}
 ]
 
-#SERVOS.append({"DESC":"Thumb", "RANGE_MIN": 275, "RANGE_MAX": 575, "INVERT": False})
-#SERVOS.append({"DESC":"Pointer", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
-#SERVOS.append({"DESC":"Middle", "RANGE_MIN": 325, "RANGE_MAX": 575, "INVERT": True})
-#SERVOS.append({"DESC":"Ring", "RANGE_MIN":  275, "RANGE_MAX": 550, "INVERT": True})
-#SERVOS.append({"DESC":"Pinky", "RANGE_MIN": 300, "RANGE_MAX": 575, "INVERT": True})
-#SERVOS.append({"DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 600, "INVERT": False})
-#SERVOS.append({"DESC":"WristTurn", "RANGE_MIN": 135, "RANGE_MAX": 660, "INVERT": False})
-#SERVOS.append({"DESC":"WristUp", "RANGE_MIN": 360, "RANGE_MAX" : 620, "INVERT": False})
 
 rpt_mode = 0
 wiimote = None
@@ -94,10 +91,18 @@ def main():
     global b_val
     global UDP_SOCK
     global STATUS
-
+    global ACTIONS
+    global action_idx
 # Setup Network (Currently UDP)
     if NETWORK == 1:
         UDP_SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+
+
+    myact = loadfile(thingactionfile)
+
+    for x in myact:
+        
+        ACTIONS.append(
 
 # Setup Wii remote
     print ("Press 1+2 to connect Wii")
@@ -145,6 +150,7 @@ def callback(mesg_list, time):
     global SENSORS
     global b_val
     global STATUS
+
     for mesg in mesg_list:
         if mesg[0] == cwiid.MESG_BTN:
             handle_buttons(mesg[1])
@@ -168,7 +174,8 @@ def handle_buttons(buttons):
     global b_val
     global status
     global SENSORS
-
+    global ACTIONS
+    global action_idx
     # The B (trigger) Button does cool things for us
     # When pressed that allows the glove sensors to be read and sent
     # It also changes what the other buttons do
@@ -178,42 +185,66 @@ def handle_buttons(buttons):
     else:
         b_val = False
 
-    if (buttons  & cwiid.BTN_UP):
+ if (buttons  & cwiid.BTN_UP):
         if b_val == False:
-            procAction("O")
+            action_idx = 0
+            updateleds()
     elif (buttons & cwiid.BTN_DOWN):
         if b_val == False:
-            procAction("C")
+            action_idxidx = len(ACTIONS) - 1
+            updateleds()
     elif (buttons & cwiid.BTN_LEFT):
-        print("Left")
+        if b_val == False:
+            if action_idx == 0:
+                action_idx = len(ACTIONS) - 1
+            else:
+                action_idx = action_idx - 1
+            updateleds()
     elif (buttons & cwiid.BTN_RIGHT):
-        print("Right")
-    elif (buttons & cwiid.BTN_1):
         if b_val == False:
-            procAction("F")
-    elif (buttons & cwiid.BTN_2):
-        print("Two")
-    elif (buttons & cwiid.BTN_PLUS):
+            if action_idx == len(ACTIONS) - 1:
+                action_idx = 0
+            else:
+                action_idx = action_idx + 1
+            updateleds()
+    elif (buttons & cwiid.BTN_A):
         if b_val == False:
+            # Run Action
+            procAction(str(action_idx))
+        else:
+            #Lock Wrist
+            procAction("L")
+    elif (buttons & cwiid.BTN_MINUS):
+        if b_val == False:
+            # Close Lid
+            procAction("C")
+        else:
+            # Put away Thing
+            procAction("D")
+    elif (buttons & cwiid.BTN_HOME):
+        if b_val == False:
+            # Home Calms Servos
+            print("Calming Servos")
+            procAction("A")
+        else:
+            # Reset sensors
             print("Resetting Max")
             for z in SENSORS:
                 z['MAX'] = 0
-        else:
             print("Resetting Min")
             for z in SENSORS:
                 z['MIN'] = 1000
-    elif (buttons & cwiid.BTN_MINUS):
-        # Locks the wrist up
-        procAction("L")
-    elif (buttons & cwiid.BTN_A):
-        # A will summon thing if B is not pressed, and put him a way if B is pressed
+    elif (buttons & cwiid.BTN_PLUS):
         if b_val == False:
+            #Open Lid
+            procAction("O")
+        else:
+            #Summon Thing
             procAction("U")
-        elif b_val == True:
-            procAction("D")
-    elif (buttons & cwiid.BTN_HOME):
-        # Home Calms Servos
-        procAction("A")
+    elif (buttons & cwiid.BTN_1):
+        pass
+    elif (buttons & cwiid.BTN_2):
+        pass
 
 def sendCmd(sendstr, curname):
     global UDP_SOCK
@@ -261,13 +292,14 @@ def procAction(action):
             procAction("P")
         sendCmd("A:C::", "Action")
         STATUS = "LIDDOWNHANDDOWN"
-    elif action == "A":
-        sendCmd("A:A::", "Action")
-    elif action == "L":
-        sendCmd("A:L::", "Action")
-    elif action == "F":
-        sendCmd("A:F::", "Action")
-    
+    elif action == "B":
+        if STATUS.find("LIDDOWN") >= 0:
+            sendCmd("A:B::", "Action")
+    else:
+        if STATUS.find("HANDUP") >= 0:
+            sendCmd("A:" + action + "::", "Action")
+
+
 
 
 
@@ -329,6 +361,20 @@ def procValue(sens, val):
                 sendCmd(sendstr, curname)
             sendstr = ""
     SENSORS[sens]['LAST'] = val
+
+def loadfile(f):
+    o = open(f, "rb")
+    tj = o.read()
+    o.close()
+
+    pj = ""
+    for line in tj.split("\n"):
+        if line.strip() == "" or line.strip().find("#") == 0:
+            pass
+        else:
+            pj += line.strip() + "\n"
+#    print(pj)
+    return json.loads(pj)
 
 if __name__ == "__main__":
     main()
