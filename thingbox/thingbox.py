@@ -54,7 +54,7 @@ thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 STATUS_OPT = [ 'LIDUP', 'HANDUPLIDUP', 'HANDDOWNLIDUP', 'HANDDOWNLIDDOWN' ]
 DEBUG = 0
 BUT_DEBUG = 0
-NET_DEBUG = 1
+NET_DEBUG = 0
 if HOMENET == 1:
     UDP_IP = '192.168.0.130'
 else:
