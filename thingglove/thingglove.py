@@ -13,9 +13,11 @@ ACC_DEBUG = 0
 BUT_DEBUG = 0
 FLX_DEBUG = 0
 PRC_DEBUG = 0
+PNG_DEBUG = 1
 NET_DEBUG = 0
 ACT_DEBUG = 0
 NETWORK = 1
+PINGTIMEOUT = 1
 HOMENET = 0
 ACTIONS = []
 ALLOWED_KEYS = []
@@ -94,10 +96,11 @@ def main():
     global STATUS
     global ACTIONS
     global action_idx
+    global PINGTIMEOUT
 # Setup Network (Currently UDP)
     if NETWORK == 1:
         UDP_SOCK = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-
+        UDP_SOCK.settimeout(PINGTIMEOUT)
 
     myact = loadfile(thingactionfile)
 
@@ -175,10 +178,6 @@ def callback(mesg_list, time):
         else:
             print 'Unknown Report'
 
-def updateleds():
-    global action_idx
-    global wiimote
-    wiimote.led = action_idx
 
 def handle_buttons(buttons):
     global b_val
@@ -196,12 +195,7 @@ def handle_buttons(buttons):
         b_val = False
 
     if (buttons  & cwiid.BTN_UP):
-        if b_val == False:
-            action_idx = 0
-            updateleds()
-        else:
-            if STATUS.find("HANDUP") >= 0:
-                procAction("F")
+        sendPing(False)
     elif (buttons & cwiid.BTN_DOWN):
         if b_val == False:
             action_idxidx = len(ACTIONS) - 1
@@ -284,6 +278,76 @@ def sendCmd(sendstr, curname):
             print ("******** %s Sending this: %s " % (curname, sendstr))
     if NETWORK:
         UDP_SOCK.sendto(sendstr, (UDP_IP, UDP_PORT))
+
+def updateleds():
+    global action_idx
+    global wiimote
+    wiimote.led = action_idx
+
+def sendPing(auto):
+    global wiimote
+    global UDP_SOCK
+    global action_idx
+    sendtime = 0
+    recvtime = 0
+    bresp = False
+    if auto == True:
+        strping = "PINGA"
+    else:
+        strping = "PINGM"
+    sendtime = int(time.time())
+    UDP_SOCK.sendto(strping, (UDP_IP, UDP_PORT))
+     #If data is received back from server, print
+    strresult = ""
+    try:
+        resp, srv = UDP_SOCK.recvfrom(5)
+        recvtime = int(time.time())
+        totaltime = recvtime - sendtime
+        strresult = "Ping Response in %s secs: %s" % (totaltime, resp)
+        bresp = True
+    except socket.timeout:
+        strresult = "Ping Timeout - %s " % PINGTIMEOUT
+        bresp = False
+    if DEBUG or PNG_DEBUG:
+        print(strresult)
+    if auto == False:
+        wiimote.led = 0
+        time.sleep(1)
+        if bresp == True:
+            wiimote.led = 1
+            time.sleep(0.2)
+            wiimote.led = 2
+            time.sleep(0.2)
+            wiimote.led = 4
+            time.sleep(0.2)
+            wiimote.led = 8
+            time.sleep(0.2)
+            wiimote.led = 0
+            time.sleep(0.2)
+            wiimote.led = 8
+            time.sleep(0.2)
+            wiimote.led = 4
+            time.sleep(0.2)
+            wiimote.led = 2
+            time.sleep(0.2)
+            wiimote.led = 1
+            time.sleep(0.2)
+            wiimote.led = 0
+            time.sleep(1)
+        else:
+            wiimote.led = 15
+            time.sleep(0.2)
+            wiimote.led = 0
+            time.sleep(0.2)
+            wiimote.led = 15
+            time.sleep(0.2)
+            wiimote.led = 0
+            time.sleep(0.2)
+            wiimote.led = 15
+            time.sleep(0.2)
+            wiimote.led = 0
+            time.sleep(0.2)
+        updateleds()
 
 def roundval(val, rnd):
     modval = val % rnd
