@@ -140,6 +140,13 @@ def main():
             if data:
                 if DEBUG or NET_DEBUG:
                     print("Recieved Data Update: %s" % data)
+                if data == "PINGM" or data == "PINGA":
+                    pingtime = int(time.time())
+                    response = data.replace("PING", "GOOD")
+                    sock.sendto(response, addr)
+                    if DEBUG or NET_DEBUG:
+                        print("Got ping at %s, sent pong" % pingtime)
+                    continue
                 if data.find(":") >= 0:
                     pass
                 else:
