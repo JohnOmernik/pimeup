@@ -14,7 +14,7 @@ BUT_DEBUG = 0
 FLX_DEBUG = 0
 PRC_DEBUG = 0
 NET_DEBUG = 0
-ACT_DEBUG = 1
+ACT_DEBUG = 0
 NETWORK = 1
 HOMENET = 0
 ACTIONS = []
@@ -233,7 +233,7 @@ def handle_buttons(buttons):
             #Lock Wrist
             procAction("L")
     elif (buttons & cwiid.BTN_MINUS):
-        if b_val == False:
+        if b_val == True:
             # Close Lid
             procAction("C")
         else:
@@ -253,7 +253,7 @@ def handle_buttons(buttons):
             for z in SENSORS:
                 z['MIN'] = 1000
     elif (buttons & cwiid.BTN_PLUS):
-        if b_val == False:
+        if b_val == True:
             #Open Lid
             procAction("O")
         else:
@@ -278,8 +278,6 @@ def sendCmd(sendstr, curname):
         tsendstr = sendstr + tpad
         print("Making sendstr (%s) into %s" % (sendstr, tsendstr))
         sendstr = tsendstr
-    else:
-        print("*WARNING CMD SHOULD BE only 5 characters!")
 
     if (DEBUG or NET_DEBUG):
         if curname in SHOWLIST or sendstr.find("A") == 0:
