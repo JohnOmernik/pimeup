@@ -6,7 +6,7 @@
 {"IDX": 4, "DESC":"Pinky", "RANGE_MIN": 150, "RANGE_MAX": 340, "INVERT": 0, "NOTES": "410 is down, 716 is up"},
 {"IDX": 5, "DESC":"WristFlex", "RANGE_MIN": 300, "RANGE_MAX": 500, "INVERT": 0, "NOTES": "600 is a bit bent back, 500 is straight up, 300 is forward"},
 {"IDX": 6, "DESC":"WristTurn", "RANGE_MIN": 250, "RANGE_MAX": 550, "INVERT": 0, "NOTES": "250 is back facing right, 400 facing forward, 550 facing right"},
-{"IDX": 7, "DESC":"WristUp", "RANGE_MIN": 330, "RANGE_MAX" : 600, "INVERT": 1, "NOTES": "330 is past staight a bit, 380 is straight up,  600 is laying down"},
+{"IDX": 7, "DESC":"WristUp", "RANGE_MIN": 314, "RANGE_MAX" : 600, "INVERT": 1, "NOTES": "330 is past staight a bit, 380 is straight up,  600 is laying down"},
 {"IDX": 8, "DESC":"Lid", "RANGE_MIN": 240, "RANGE_MAX" : 600, "INVERT": 0, "NOTES": "240 Lid closed, 600 lid open"}
 ]
 

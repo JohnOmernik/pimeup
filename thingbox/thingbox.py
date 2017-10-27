@@ -52,7 +52,7 @@ except:
 thingfile = "/home/pi/pimeup/thingbox/thing.json"
 thingactionfile = "/home/pi/pimeup/thingbox/thingactions.json"
 STATUS_OPT = [ 'LIDUP', 'HANDUPLIDUP', 'HANDDOWNLIDUP', 'HANDDOWNLIDDOWN' ]
-DEBUG = 0
+DEBUG = 1
 BUT_DEBUG = 0
 NET_DEBUG = 0
 if HOMENET == 1:
