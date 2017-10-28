@@ -13,7 +13,7 @@ ACC_DEBUG = 0
 BUT_DEBUG = 0
 FLX_DEBUG = 0
 PRC_DEBUG = 0
-PNG_DEBUG = 1
+PNG_DEBUG = 0
 NET_DEBUG = 0
 ACT_DEBUG = 0
 NETWORK = 1
@@ -48,8 +48,8 @@ UDP_SOCK = None
 
 
 
-SHOWLIST = [ "WristFlex", "WristTurn", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
-#SHOWLIST = [ "Index", "Middle" ] 
+#SHOWLIST = [ "WristFlex", "WristTurn", "Pinky", "Ring", "Middle", "Index", "Thumb" ]
+SHOWLIST = [ "Ring" ] 
 # Defaults:
 mysens_thres = 2
 mychng_thres = 5
