@@ -69,7 +69,7 @@ wiimote = None
 connected = False
 rumble = 0
 b_val = False
-
+status_chk = True
 def main():
     global SRV_OPTIONS
     global ACTIONS
@@ -79,6 +79,7 @@ def main():
     global rpt_mode
     global connected
     global b_val
+    global status_chk
 
     SRV_OPTIONS = loadfile(thingfile)
     ACTIONS = loadfile(thingactionfile)
@@ -172,6 +173,11 @@ def main():
                 cmdval = tdata[1]
                 if str(cmdkey) == "A" and cmdval in ACT_SHORT:
                     processAction(cmdval)
+                elif str(cmdkey) == "C" and cmdval != "":
+                    if int(cmdval) == 0:
+                        status_chk = False
+                    elif int(cmdval) == 1:
+                        status_chk = True
                 elif str(cmdkey) == "S" and cmdval != "":
                     if cmdval in STATUS_OPT:
                         STATUS = cmdval
@@ -244,7 +250,8 @@ def handle_buttons(buttons):
 def setfingerperc(cmdkey, cmdorigval, ignorestatus=False):
     global SRV_OPTIONS
     global STATUS
-    if STATUS.find("HANDUP") >= 0 or ignorestatus:
+    global status_chk
+    if STATUS.find("HANDUP") >= 0 or ignorestatus or not status_chk:
         if SRV_OPTIONS[cmdkey]["INVERT"] == True:
             cmdval = abs(cmdorigval - 100)
         else:
@@ -292,6 +299,7 @@ def printActions():
 
 def processAction(actKey):
     global STATUS
+    global status_chk
     act = {}
     bfound = False
     for x in ACTIONS:
@@ -303,7 +311,7 @@ def processAction(actKey):
         req_status = act['REQ_STATUS']
         actStr = act['ACTION']
         if req_status != "":
-            if STATUS.find(req_status) < 0:
+            if STATUS.find(req_status) < 0 and status_chk:
                 print("Can't do it")
                 print("STATUS: %s" % STATUS)
                 print("req_status: %s" % req_status)
