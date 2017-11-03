@@ -460,7 +460,14 @@ def procValue(sens, val):
 
 
             if sendstr != "":
-                sendCmd(sendstr, curname)
+                if sendstr.find("3:") == 0:
+                    pass
+                elif sendstr.find("2:") == 0:
+                    sendCmd(sendstr, curname)
+                    newstr = sendstr.replace("2:", "3:")
+                    sendCmd(newstr, curname)
+                else:
+                    sendCmd(sendstr, curname)
             sendstr = ""
     SENSORS[sens]['LAST'] = val
 
